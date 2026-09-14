@@ -125,12 +125,6 @@
         <div class="result-list" id="result-list"></div>
       </section>
 
-      <!-- 過去の記録 -->
-      <section class="panel">
-        <div class="panel-title">過去の記録</div>
-        <div class="history-list" id="history-list"></div>
-      </section>
-
       <div class="footer-actions">
         <button class="reset-btn" id="reset-btn" type="button">今回の記録をリセット</button>
         <span id="save-status"></span>
@@ -152,8 +146,29 @@
         <div id="career-stats"></div>
       </section>
 
+      <!-- 過去の記録 -->
+      <section class="panel">
+        <div class="panel-title">過去の記録</div>
+        <p class="hint">記録をタップすると、その時の内容をすべて確認できます。</p>
+        <div class="history-list" id="history-list"></div>
+      </section>
+
     </div>
 
+  </div>
+
+  <!-- 過去の記録の詳細 -->
+  <div id="history-detail-overlay" class="history-detail-overlay" style="display:none">
+    <div class="history-detail-panel">
+      <div class="history-detail-header">
+        <button type="button" id="history-detail-back" class="link-btn">← 戻る</button>
+        <div class="history-detail-title-wrap">
+          <div class="history-detail-title-text" id="history-detail-title-text"></div>
+          <div class="history-detail-date" id="history-detail-date"></div>
+        </div>
+      </div>
+      <div id="history-detail-body"></div>
+    </div>
   </div>
 
 </div>

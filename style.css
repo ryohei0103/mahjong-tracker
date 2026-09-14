@@ -220,11 +220,35 @@
   .history-item{
     display:flex;align-items:center;gap:10px;padding:10px 11px;border-radius:9px;
     background:rgba(0,0,0,.035);border:1px solid var(--tile-edge);font-size:12.5px;
+    cursor:pointer;transition:.15s;
   }
+  .history-item:active{background:rgba(0,0,0,.07);}
   .history-main{flex:1;min-width:0;}
   .history-title{font-weight:700;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .history-date{font-size:10.5px;color:var(--muted);margin-top:1px;}
   .history-top{font-weight:700;white-space:nowrap;font-size:12.5px;}
+
+  /* ---- history detail ---- */
+  .history-detail-overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;
+    display:flex;justify-content:center;overflow-y:auto;padding:20px 0 60px;
+  }
+  .history-detail-panel{width:100%;max-width:480px;margin:0 14px;}
+  .history-detail-header{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+  .history-detail-header .link-btn{color:#e8e0cc;flex-shrink:0;}
+  .history-detail-title-wrap{flex:1;min-width:0;}
+  .history-detail-title-text{
+    font-family:'Shippori Mincho',serif;font-weight:700;font-size:16px;color:#f4ecd8;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .history-detail-date{font-size:11px;color:#c9d8c6;margin-top:1px;}
+  .detail-name{font-size:15px;padding:5px 2px;border-bottom:2px solid var(--tile-edge);}
+  .detail-table{border-collapse:collapse;width:100%;min-width:280px;font-variant-numeric:tabular-nums;}
+  .detail-table th, .detail-table td{padding:6px 6px;text-align:center;font-size:12.5px;}
+  .detail-table thead th{font-weight:700;border-bottom:2px solid var(--felt-1);}
+  .detail-table tbody th{font-weight:600;color:var(--muted);}
+  .detail-table tfoot th, .detail-table tfoot td{border-top:2px solid var(--felt-1);font-weight:700;}
+  .detail-chip-count{font-size:11.5px;color:var(--muted);}
 
   /* ---- footer actions ---- */
   .footer-actions{display:flex;justify-content:space-between;align-items:center;margin-top:20px;padding:0 4px;}

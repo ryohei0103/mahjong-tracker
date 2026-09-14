@@ -536,7 +536,7 @@
       const top = totals[0];
       const d = new Date(row.created_at);
       const dateStr = `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`;
-      html += `<div class="history-item">
+      html += `<div class="history-item" data-history-open="${row.id}">
         <div class="history-main">
           <div class="history-title">${escapeHtml(row.title || '記録')}</div>
           <div class="history-date">${dateStr}</div>
@@ -547,8 +547,105 @@
     });
     container.innerHTML = html;
     document.querySelectorAll('[data-history-del]').forEach(btn => {
-      btn.addEventListener('click', e => deleteHistoryItem(e.currentTarget.dataset.historyDel));
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        deleteHistoryItem(e.currentTarget.dataset.historyDel);
+      });
     });
+    document.querySelectorAll('[data-history-open]').forEach(item => {
+      item.addEventListener('click', e => openHistoryDetail(e.currentTarget.dataset.historyOpen));
+    });
+  }
+
+  /* ---------- 過去の記録の詳細 ---------- */
+  function renderHistoryDetailBody(s){
+    const nameOf = i => (s.players && s.players[i] && s.players[i].trim() !== '') ? s.players[i] : defaultName(i);
+
+    let namesHtml = '<div class="name-grid">';
+    for(let i = 0; i < s.playerCount; i++){
+      namesHtml += `<div class="name-field"><label>プレイヤー${i+1}${s.selfIndex === i ? '（自分）' : ''}</label><div class="detail-name">${escapeHtml(nameOf(i))}</div></div>`;
+    }
+    namesHtml += '</div>';
+
+    let theadHtml = '<tr><th>半荘</th>';
+    for(let i = 0; i < s.playerCount; i++){ theadHtml += `<th>${escapeHtml(nameOf(i))}</th>`; }
+    theadHtml += '</tr>';
+
+    let bodyRows = '';
+    (s.hanchans || []).forEach((h, rowIdx) => {
+      bodyRows += `<tr><th>${rowIdx+1}</th>`;
+      for(let i = 0; i < s.playerCount; i++){
+        const val = h.scores[i];
+        const shown = (val === null || val === undefined) ? '-' : formatScore(val);
+        bodyRows += `<td class="${val ? scoreClass(val) : ''}">${shown}</td>`;
+      }
+      bodyRows += '</tr>';
+    });
+
+    const hanchanTotals = new Array(s.playerCount).fill(0);
+    (s.hanchans || []).forEach(h => { for(let i = 0; i < s.playerCount; i++){ hanchanTotals[i] += (h.scores[i] || 0); } });
+    let footHtml = '<tr><th>合計</th>';
+    hanchanTotals.forEach(t => { footHtml += `<td class="${scoreClass(t)}">${formatScore(t)}</td>`; });
+    footHtml += '</tr>';
+
+    const hanchanHtml = `<div class="table-scroll"><table class="detail-table"><thead>${theadHtml}</thead><tbody>${bodyRows}</tbody><tfoot>${footHtml}</tfoot></table></div>`;
+
+    let chipHtml = '<div class="chip-rows">';
+    for(let i = 0; i < s.playerCount; i++){
+      const c = (s.chips && s.chips[i]) || { plus: 0, minus: 0 };
+      const total = (c.plus - c.minus) * (s.chipValue || 0);
+      chipHtml += `<div class="chip-row"><span class="cname">${escapeHtml(nameOf(i))}</span><span class="detail-chip-count">＋${c.plus} / −${c.minus}枚</span><span class="chip-total ${scoreClass(total)}">${formatScore(total)}</span></div>`;
+    }
+    chipHtml += '</div>';
+
+    const totals = computeTotals(s);
+    let resultHtml = '<div class="result-list">';
+    totals.forEach((t, rank) => {
+      resultHtml += `<div class="result-item ${rank === 0 ? 'rank-1' : ''}">
+        <div class="result-top">
+          <div class="rank-badge">${rank+1}位</div>
+          <div class="result-main"><div class="result-name">${escapeHtml(t.name)}${t.idx === s.selfIndex ? '（自分）' : ''}</div></div>
+          <div class="result-stats">
+            <div class="result-stat">
+              <div class="stat-label">半荘</div>
+              <div class="stat-value ${scoreClass(t.hYen)}">${formatScore(t.hYen)}円</div>
+              <div class="stat-sub">${formatScore(t.hTotal)}点</div>
+            </div>
+            <div class="result-stat">
+              <div class="stat-label">チップ</div>
+              <div class="stat-value ${scoreClass(t.chipTotal)}">${formatScore(t.chipTotal)}</div>
+            </div>
+          </div>
+        </div>
+        <div class="result-total-row">
+          <span class="total-label">合計</span>
+          <span class="total-value ${scoreClass(t.sum)}">${formatScore(t.sum)}</span>
+        </div>
+      </div>`;
+    });
+    resultHtml += '</div>';
+
+    return `
+      <section class="panel"><div class="panel-title">卓の設定</div>${namesHtml}</section>
+      <section class="panel"><div class="panel-title">半荘ごとの収支（1点＝${s.hanchanRate}円）</div>${hanchanHtml}</section>
+      <section class="panel"><div class="panel-title">チップ精算（1枚＝${s.chipValue}点）</div>${chipHtml}</section>
+      <section class="panel"><div class="panel-title">最終結果</div>${resultHtml}</section>
+    `;
+  }
+
+  function openHistoryDetail(id){
+    const row = historyList.find(r => String(r.id) === String(id));
+    if(!row) return;
+    const s = Object.assign(defaultState(), row.state || {});
+    const d = new Date(row.created_at);
+    document.getElementById('history-detail-title-text').textContent = row.title || '記録';
+    document.getElementById('history-detail-date').textContent = `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`;
+    document.getElementById('history-detail-body').innerHTML = renderHistoryDetailBody(s);
+    document.getElementById('history-detail-overlay').style.display = 'flex';
+  }
+
+  function closeHistoryDetail(){
+    document.getElementById('history-detail-overlay').style.display = 'none';
   }
 
   /* ---------- リセット ---------- */
@@ -603,6 +700,7 @@
     document.getElementById('add-hanchan-btn').addEventListener('click', addHanchan);
     document.getElementById('reset-btn').addEventListener('click', resetAll);
     document.getElementById('new-session-btn').addEventListener('click', startNewSession);
+    document.getElementById('history-detail-back').addEventListener('click', closeHistoryDetail);
 
     const hanchanRateInput = document.getElementById('hanchan-rate-input');
     attachSelectOnFocus(hanchanRateInput);
