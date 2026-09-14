@@ -74,6 +74,14 @@
   }
   .loading-note{font-size:13px;color:var(--muted);text-align:center;padding:6px 0;}
 
+  /* ---- group select ---- */
+  .group-select-row{margin-bottom:14px;}
+  .group-select-row label{display:block;font-size:11px;color:var(--muted);margin-bottom:4px;}
+  .group-select-row select{
+    width:100%;border:1px solid var(--tile-edge);border-radius:8px;padding:9px 10px;
+    font-family:inherit;font-size:14px;background:#fff;color:var(--ink);
+  }
+
   /* ---- seat toggle ---- */
   .seat-toggle{display:flex;gap:8px;margin-bottom:14px;}
   .seat-toggle button{

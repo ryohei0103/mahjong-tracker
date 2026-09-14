@@ -81,6 +81,12 @@
       <!-- 人数・名前設定 -->
       <section class="panel">
         <div class="panel-title">卓の設定</div>
+        <div class="group-select-row">
+          <label>グループから読み込む</label>
+          <select id="group-select">
+            <option value="">グループを選択…</option>
+          </select>
+        </div>
         <div class="seat-toggle">
           <button id="btn-3p" type="button">3人打ち</button>
           <button id="btn-4p" type="button">4人打ち</button>
@@ -146,6 +152,14 @@
         <div id="career-stats"></div>
       </section>
 
+      <!-- グループ -->
+      <section class="panel">
+        <div class="panel-title">グループ</div>
+        <p class="hint">いつものメンバーをグループとして登録しておくと、記録作成時に名前をまとめて読み込めます。グループをタップすると、メンバー全員の通算成績が見られます。</p>
+        <div class="history-list" id="group-list"></div>
+        <button class="add-row-btn" id="add-group-btn" type="button">＋ グループを作成</button>
+      </section>
+
       <!-- 過去の記録 -->
       <section class="panel">
         <div class="panel-title">過去の記録</div>
@@ -168,6 +182,45 @@
         </div>
       </div>
       <div id="history-detail-body"></div>
+    </div>
+  </div>
+
+  <!-- グループ作成 -->
+  <div id="group-form-overlay" class="history-detail-overlay" style="display:none">
+    <div class="history-detail-panel">
+      <div class="history-detail-header">
+        <button type="button" id="group-form-back" class="link-btn">← 戻る</button>
+        <div class="history-detail-title-wrap">
+          <div class="history-detail-title-text">グループを作成</div>
+        </div>
+      </div>
+      <section class="panel">
+        <div class="panel-title">グループ名</div>
+        <input type="text" class="session-title-input" id="group-name-input" placeholder="例：金曜メンバー">
+      </section>
+      <section class="panel">
+        <div class="panel-title">メンバー</div>
+        <div class="seat-toggle">
+          <button id="group-btn-3p" type="button">3人打ち</button>
+          <button id="group-btn-4p" type="button">4人打ち</button>
+        </div>
+        <div class="name-grid" id="group-name-grid"></div>
+        <p class="hint">プレイヤー名の右の「自分」ボタンで、自分を指定できます。</p>
+      </section>
+      <button class="add-row-btn primary" id="group-save-btn" type="button">グループを作成</button>
+    </div>
+  </div>
+
+  <!-- グループの成績 -->
+  <div id="group-detail-overlay" class="history-detail-overlay" style="display:none">
+    <div class="history-detail-panel">
+      <div class="history-detail-header">
+        <button type="button" id="group-detail-back" class="link-btn">← 戻る</button>
+        <div class="history-detail-title-wrap">
+          <div class="history-detail-title-text" id="group-detail-title-text"></div>
+        </div>
+      </div>
+      <div id="group-detail-body"></div>
     </div>
   </div>
 

@@ -58,5 +58,42 @@ create trigger game_sessions_set_updated_at
 --   "hanchans": [{ "scores": [null, null, null, null] }, ...],
 --   "hanchanRate": 1,               -- 1点あたりの円換算レート
 --   "chipValue": 100,               -- チップ1枚あたりの点数
---   "chips": [{ "plus": 0, "minus": 0 }, ...]
+--   "chips": [{ "plus": 0, "minus": 0 }, ...],
+--   "selfIndex": null               -- players配列内で「自分」に当たるインデックス（0始まり）
 -- }
+
+-- いつものメンバー固定の「グループ」。記録（game_sessions）はグループに紐付けられる。
+create table if not exists public.groups (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  name text not null,
+  player_count int not null default 3,
+  players text[] not null default '{}',
+  self_index int,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists groups_user_id_idx on public.groups(user_id);
+
+alter table public.groups enable row level security;
+
+drop policy if exists "select own groups" on public.groups;
+create policy "select own groups" on public.groups
+  for select using (auth.uid() = user_id);
+
+drop policy if exists "insert own groups" on public.groups;
+create policy "insert own groups" on public.groups
+  for insert with check (auth.uid() = user_id);
+
+drop policy if exists "update own groups" on public.groups;
+create policy "update own groups" on public.groups
+  for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "delete own groups" on public.groups;
+create policy "delete own groups" on public.groups
+  for delete using (auth.uid() = user_id);
+
+alter table public.game_sessions
+  add column if not exists group_id uuid references public.groups(id) on delete set null;
+
+create index if not exists game_sessions_group_id_idx on public.game_sessions(group_id);
