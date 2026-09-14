@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>麻雀収支メモ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+
+  <div class="hero">
+    <svg class="hero-tiles" viewBox="0 0 320 120" aria-hidden="true">
+      <defs>
+        <filter id="tileShadow" x="-30%" y="-30%" width="160%" height="160%">
+          <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#00000060"/>
+        </filter>
+      </defs>
+      <g transform="translate(38,26) rotate(-9)" filter="url(#tileShadow)">
+        <rect width="68" height="90" rx="9" style="fill:var(--tile);stroke:var(--tile-edge);stroke-width:2"/>
+        <rect x="6" y="6" width="56" height="78" rx="5" style="fill:none;stroke:#00000014;stroke-width:1"/>
+        <text x="34" y="60" font-size="42" text-anchor="middle" font-family="'Zen Old Mincho','Shippori Mincho',serif" style="fill:#1c4a8f">白</text>
+      </g>
+      <g transform="translate(126,8)" filter="url(#tileShadow)">
+        <rect width="68" height="90" rx="9" style="fill:var(--tile);stroke:var(--tile-edge);stroke-width:2"/>
+        <rect x="6" y="6" width="56" height="78" rx="5" style="fill:none;stroke:#00000014;stroke-width:1"/>
+        <text x="34" y="60" font-size="42" text-anchor="middle" font-family="'Zen Old Mincho','Shippori Mincho',serif" style="fill:#276b3f">發</text>
+      </g>
+      <g transform="translate(214,24) rotate(9)" filter="url(#tileShadow)">
+        <rect width="68" height="90" rx="9" style="fill:var(--tile);stroke:var(--tile-edge);stroke-width:2"/>
+        <rect x="6" y="6" width="56" height="78" rx="5" style="fill:none;stroke:#00000014;stroke-width:1"/>
+        <text x="34" y="60" font-size="42" text-anchor="middle" font-family="'Zen Old Mincho','Shippori Mincho',serif" style="fill:var(--loss)">中</text>
+      </g>
+    </svg>
+    <h1>麻雀収支メモ</h1>
+    <p>半荘ごとの点数とチップをまとめて記録</p>
+  </div>
+
+  <div id="loading-screen" class="panel">
+    <p class="loading-note">読み込み中…</p>
+  </div>
+
+  <!-- ログイン / 新規登録 -->
+  <section class="panel" id="auth-screen" style="display:none">
+    <div class="panel-title" id="auth-title">ログイン</div>
+    <div class="auth-field">
+      <label>メールアドレス</label>
+      <input type="email" id="auth-email" autocomplete="email">
+    </div>
+    <div class="auth-field">
+      <label>パスワード</label>
+      <input type="password" id="auth-password" autocomplete="current-password">
+    </div>
+    <div class="auth-message" id="auth-message"></div>
+    <button class="add-row-btn primary" id="auth-submit-btn" type="button">ログイン</button>
+    <p class="auth-toggle">
+      <span id="auth-toggle-label">アカウントをお持ちでない方は</span>
+      <button type="button" id="auth-toggle-btn" class="link-btn">新規登録</button>
+    </p>
+  </section>
+
+  <!-- ログイン後のアプリ本体 -->
+  <div id="main-app" style="display:none">
+
+    <div class="topbar">
+      <span id="user-email"></span>
+      <button type="button" id="logout-btn">ログアウト</button>
+    </div>
+
+    <section class="panel">
+      <div class="panel-title">今回の記録</div>
+      <input type="text" class="session-title-input" id="session-title-input" placeholder="記録のタイトル（例：9/14 雀荘）">
+      <button class="add-row-btn" id="new-session-btn" type="button">＋ この記録を保存して新しく始める</button>
+    </section>
+
+    <!-- 人数・名前設定 -->
+    <section class="panel">
+      <div class="panel-title">卓の設定</div>
+      <div class="seat-toggle">
+        <button id="btn-3p" type="button">3人打ち</button>
+        <button id="btn-4p" type="button">4人打ち</button>
+      </div>
+      <div class="name-grid" id="name-grid"></div>
+    </section>
+
+    <!-- 半荘ごとの収支 -->
+    <section class="panel">
+      <div class="panel-title">半荘ごとの収支</div>
+      <div class="chip-value-row">
+        <span>1点 =</span>
+        <input type="number" inputmode="numeric" id="hanchan-rate-input" value="1">
+        <span>円</span>
+      </div>
+      <div class="table-scroll">
+        <table id="hanchan-table">
+          <thead></thead>
+          <tbody></tbody>
+          <tfoot></tfoot>
+        </table>
+      </div>
+      <button class="add-row-btn" id="add-hanchan-btn" type="button">＋ 半荘を追加</button>
+      <p class="hint">左のボタン（+/−）をタップして符号を切り替え、右の欄に数字を入力してください。1半荘分の合計が0になると「判定」欄に✓が表示されます。</p>
+    </section>
+
+    <!-- チップ精算 -->
+    <section class="panel">
+      <div class="panel-title">チップ精算</div>
+      <div class="chip-value-row">
+        <span>チップ1枚 =</span>
+        <input type="number" inputmode="numeric" id="chip-value-input" value="100">
+        <span>点</span>
+      </div>
+      <div class="chip-rows" id="chip-rows"></div>
+    </section>
+
+    <!-- 最終結果 -->
+    <section class="panel">
+      <div class="panel-title">最終結果</div>
+      <div class="result-list" id="result-list"></div>
+    </section>
+
+    <!-- 過去の記録 -->
+    <section class="panel">
+      <div class="panel-title">過去の記録</div>
+      <div class="history-list" id="history-list"></div>
+    </section>
+
+    <div class="footer-actions">
+      <button class="reset-btn" id="reset-btn" type="button">今回の記録をリセット</button>
+      <span id="save-status"></span>
+    </div>
+
+  </div>
+
+</div>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
