@@ -19,7 +19,8 @@
       chips: [
         { plus: 0, minus: 0 }, { plus: 0, minus: 0 },
         { plus: 0, minus: 0 }, { plus: 0, minus: 0 }
-      ]
+      ],
+      selfIndex: null
     };
   }
 
@@ -197,6 +198,7 @@
     renderFinalResults();
     await loadHistory();
     renderHistory();
+    renderCareerStats();
   }
 
   async function deleteHistoryItem(id){
@@ -205,6 +207,7 @@
     if(error){ alert('削除に失敗しました'); return; }
     await loadHistory();
     renderHistory();
+    renderCareerStats();
   }
 
   /* ---------- 設定パネル ---------- */
@@ -216,13 +219,23 @@
       field.className = 'name-field';
       const label = document.createElement('label');
       label.textContent = `プレイヤー${i+1}`;
+      const row = document.createElement('div');
+      row.className = 'name-input-row';
       const input = document.createElement('input');
       input.type = 'text';
       input.value = state.players[i] || '';
       input.placeholder = defaultName(i);
       input.addEventListener('input', e => handleNameInput(i, e.target.value));
+      const selfBtn = document.createElement('button');
+      selfBtn.type = 'button';
+      selfBtn.className = 'self-btn' + (state.selfIndex === i ? ' active' : '');
+      selfBtn.textContent = '自分';
+      selfBtn.setAttribute('aria-label', 'このプレイヤーを自分として設定');
+      selfBtn.addEventListener('click', () => setSelfPlayer(i));
+      row.appendChild(input);
+      row.appendChild(selfBtn);
       field.appendChild(label);
-      field.appendChild(input);
+      field.appendChild(row);
       grid.appendChild(field);
     }
     document.getElementById('btn-3p').classList.toggle('active', state.playerCount === 3);
@@ -245,6 +258,14 @@
     renderHanchanTable();
     renderChipSection();
     renderFinalResults();
+    renderCareerStats();
+    scheduleSave();
+  }
+
+  function setSelfPlayer(i){
+    state.selfIndex = (state.selfIndex === i) ? null : i;
+    renderPlayerSetup();
+    renderCareerStats();
     scheduleSave();
   }
 
@@ -404,7 +425,7 @@
       const c = (s.chips && s.chips[i]) || { plus:0, minus:0 };
       const chipTotal = (c.plus - c.minus) * (s.chipValue || 0);
       const name = (s.players && s.players[i] && s.players[i].trim() !== '') ? s.players[i] : defaultName(i);
-      totals.push({ name, hTotal, hYen, chipTotal, sum: hYen + chipTotal });
+      totals.push({ idx: i, name, hTotal, hYen, chipTotal, sum: hYen + chipTotal });
     }
     totals.sort((a,b) => b.hTotal - a.hTotal);
     return totals;
@@ -439,6 +460,66 @@
       </div>`;
     });
     document.getElementById('result-list').innerHTML = html;
+  }
+
+  /* ---------- 通算成績 ---------- */
+  function computeCareerStats(){
+    const records = [];
+    if(state.selfIndex !== null && state.selfIndex !== undefined && state.selfIndex < state.playerCount){
+      records.push(state);
+    }
+    historyList.forEach(row => {
+      const s = Object.assign(defaultState(), row.state || {});
+      if(s.selfIndex !== null && s.selfIndex !== undefined && s.selfIndex < s.playerCount){
+        records.push(s);
+      }
+    });
+    if(records.length === 0) return null;
+
+    let totalSum = 0, rankSum = 0, firstCount = 0;
+    records.forEach(s => {
+      const totals = computeTotals(s);
+      const rank = totals.findIndex(t => t.idx === s.selfIndex);
+      totalSum += totals[rank].sum;
+      rankSum += rank + 1;
+      if(rank === 0) firstCount++;
+    });
+    return {
+      count: records.length,
+      totalSum,
+      avgRank: rankSum / records.length,
+      firstCount
+    };
+  }
+
+  function renderCareerStats(){
+    const el = document.getElementById('career-stats');
+    if(!el) return;
+    const stats = computeCareerStats();
+    if(!stats){
+      el.innerHTML = '<p class="hint">卓の設定でプレイヤー名の横の「自分」ボタンを選ぶと、通算成績が集計されます。</p>';
+      return;
+    }
+    el.innerHTML = `
+      <div class="career-grid">
+        <div class="career-item">
+          <div class="career-label">記録数</div>
+          <div class="career-value">${stats.count}</div>
+        </div>
+        <div class="career-item">
+          <div class="career-label">通算収支</div>
+          <div class="career-value ${scoreClass(stats.totalSum)}">${formatScore(stats.totalSum)}</div>
+        </div>
+        <div class="career-item">
+          <div class="career-label">平均順位</div>
+          <div class="career-value">${stats.avgRank.toFixed(2)}位</div>
+        </div>
+        <div class="career-item">
+          <div class="career-label">1位回数</div>
+          <div class="career-value">${stats.firstCount}回</div>
+        </div>
+      </div>
+    `;
   }
 
   /* ---------- 過去の記録 ---------- */
@@ -478,6 +559,7 @@
     renderHanchanTable();
     renderChipSection();
     renderFinalResults();
+    renderCareerStats();
     scheduleSave();
   }
 
@@ -492,6 +574,7 @@
     renderChipSection();
     renderFinalResults();
     renderHistory();
+    renderCareerStats();
     document.getElementById('hanchan-rate-input').value = state.hanchanRate;
     showScreen('app');
   }

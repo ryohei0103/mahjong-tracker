@@ -83,6 +83,23 @@
     font-size:15px;padding:5px 2px;font-family:inherit;color:var(--ink);width:100%;
   }
   .name-field input:focus{outline:none;border-color:var(--felt-1);}
+  .name-input-row{display:flex;align-items:center;gap:6px;}
+  .name-input-row input{flex:1;min-width:0;width:auto;}
+  .self-btn{
+    flex-shrink:0;padding:4px 9px;border-radius:12px;border:1.5px solid var(--tile-edge);
+    background:transparent;color:var(--muted);font-size:10.5px;font-weight:700;
+    cursor:pointer;font-family:inherit;white-space:nowrap;
+  }
+  .self-btn.active{background:var(--gold);color:#3a2c00;border-color:var(--gold);}
+
+  /* ---- career stats ---- */
+  .career-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+  .career-item{
+    text-align:center;padding:10px 8px;border-radius:10px;
+    background:rgba(0,0,0,.035);border:1px solid var(--tile-edge);
+  }
+  .career-label{font-size:10.5px;color:var(--muted);margin-bottom:4px;}
+  .career-value{font-family:'Shippori Mincho',serif;font-size:17px;font-weight:800;}
 
   /* ---- session panel ---- */
   .session-title-input{
