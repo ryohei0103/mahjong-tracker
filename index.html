@@ -71,74 +71,87 @@
       <button type="button" id="logout-btn">ログアウト</button>
     </div>
 
-    <section class="panel">
-      <div class="panel-title">今回の記録</div>
-      <input type="text" class="session-title-input" id="session-title-input" placeholder="記録のタイトル（例：9/14 雀荘）">
-      <button class="add-row-btn" id="new-session-btn" type="button">＋ この記録を保存して新しく始める</button>
-    </section>
+    <div class="tab-bar">
+      <button id="tab-btn-record" type="button">記録入力</button>
+      <button id="tab-btn-mypage" type="button">マイページ</button>
+    </div>
 
-    <!-- 人数・名前設定 -->
-    <section class="panel">
-      <div class="panel-title">卓の設定</div>
-      <div class="seat-toggle">
-        <button id="btn-3p" type="button">3人打ち</button>
-        <button id="btn-4p" type="button">4人打ち</button>
+    <div id="tab-record">
+
+      <!-- 人数・名前設定 -->
+      <section class="panel">
+        <div class="panel-title">卓の設定</div>
+        <div class="seat-toggle">
+          <button id="btn-3p" type="button">3人打ち</button>
+          <button id="btn-4p" type="button">4人打ち</button>
+        </div>
+        <div class="name-grid" id="name-grid"></div>
+        <p class="hint">プレイヤー名の右の「自分」ボタンで、自分の成績として通算成績に集計されます。</p>
+      </section>
+
+      <!-- 半荘ごとの収支 -->
+      <section class="panel">
+        <div class="panel-title">半荘ごとの収支</div>
+        <div class="chip-value-row">
+          <span>1点 =</span>
+          <input type="number" inputmode="numeric" id="hanchan-rate-input" value="1">
+          <span>円</span>
+        </div>
+        <div class="table-scroll">
+          <table id="hanchan-table">
+            <thead></thead>
+            <tbody></tbody>
+            <tfoot></tfoot>
+          </table>
+        </div>
+        <button class="add-row-btn" id="add-hanchan-btn" type="button">＋ 半荘を追加</button>
+        <p class="hint">左のボタン（+/−）をタップして符号を切り替え、右の欄に数字を入力してください。1半荘分の合計が0になると「判定」欄に✓が表示されます。</p>
+      </section>
+
+      <!-- チップ精算 -->
+      <section class="panel">
+        <div class="panel-title">チップ精算</div>
+        <div class="chip-value-row">
+          <span>チップ1枚 =</span>
+          <input type="number" inputmode="numeric" id="chip-value-input" value="100">
+          <span>点</span>
+        </div>
+        <div class="chip-rows" id="chip-rows"></div>
+      </section>
+
+      <!-- 最終結果 -->
+      <section class="panel">
+        <div class="panel-title">最終結果</div>
+        <div class="result-list" id="result-list"></div>
+      </section>
+
+      <!-- 過去の記録 -->
+      <section class="panel">
+        <div class="panel-title">過去の記録</div>
+        <div class="history-list" id="history-list"></div>
+      </section>
+
+      <div class="footer-actions">
+        <button class="reset-btn" id="reset-btn" type="button">今回の記録をリセット</button>
+        <span id="save-status"></span>
       </div>
-      <div class="name-grid" id="name-grid"></div>
-      <p class="hint">プレイヤー名の右の「自分」ボタンで、自分の成績として通算成績に集計されます。</p>
-    </section>
 
-    <!-- 通算成績 -->
-    <section class="panel">
-      <div class="panel-title">通算成績（自分）</div>
-      <div id="career-stats"></div>
-    </section>
+    </div>
 
-    <!-- 半荘ごとの収支 -->
-    <section class="panel">
-      <div class="panel-title">半荘ごとの収支</div>
-      <div class="chip-value-row">
-        <span>1点 =</span>
-        <input type="number" inputmode="numeric" id="hanchan-rate-input" value="1">
-        <span>円</span>
-      </div>
-      <div class="table-scroll">
-        <table id="hanchan-table">
-          <thead></thead>
-          <tbody></tbody>
-          <tfoot></tfoot>
-        </table>
-      </div>
-      <button class="add-row-btn" id="add-hanchan-btn" type="button">＋ 半荘を追加</button>
-      <p class="hint">左のボタン（+/−）をタップして符号を切り替え、右の欄に数字を入力してください。1半荘分の合計が0になると「判定」欄に✓が表示されます。</p>
-    </section>
+    <div id="tab-mypage">
 
-    <!-- チップ精算 -->
-    <section class="panel">
-      <div class="panel-title">チップ精算</div>
-      <div class="chip-value-row">
-        <span>チップ1枚 =</span>
-        <input type="number" inputmode="numeric" id="chip-value-input" value="100">
-        <span>点</span>
-      </div>
-      <div class="chip-rows" id="chip-rows"></div>
-    </section>
+      <section class="panel">
+        <div class="panel-title">今回の記録</div>
+        <input type="text" class="session-title-input" id="session-title-input" placeholder="記録のタイトル（例：9/14 雀荘）">
+        <button class="add-row-btn" id="new-session-btn" type="button">＋ この記録を保存して新しく始める</button>
+      </section>
 
-    <!-- 最終結果 -->
-    <section class="panel">
-      <div class="panel-title">最終結果</div>
-      <div class="result-list" id="result-list"></div>
-    </section>
+      <!-- 通算成績 -->
+      <section class="panel">
+        <div class="panel-title">通算成績（自分）</div>
+        <div id="career-stats"></div>
+      </section>
 
-    <!-- 過去の記録 -->
-    <section class="panel">
-      <div class="panel-title">過去の記録</div>
-      <div class="history-list" id="history-list"></div>
-    </section>
-
-    <div class="footer-actions">
-      <button class="reset-btn" id="reset-btn" type="button">今回の記録をリセット</button>
-      <span id="save-status"></span>
     </div>
 
   </div>

@@ -576,7 +576,16 @@
     renderHistory();
     renderCareerStats();
     document.getElementById('hanchan-rate-input').value = state.hanchanRate;
+    switchTab('record');
     showScreen('app');
+  }
+
+  /* ---------- タブ切り替え ---------- */
+  function switchTab(name){
+    document.getElementById('tab-record').style.display = name === 'record' ? '' : 'none';
+    document.getElementById('tab-mypage').style.display = name === 'mypage' ? '' : 'none';
+    document.getElementById('tab-btn-record').classList.toggle('active', name === 'record');
+    document.getElementById('tab-btn-mypage').classList.toggle('active', name === 'mypage');
   }
 
   /* ---------- 初期化 ---------- */
@@ -587,6 +596,8 @@
       updateAuthModeUI();
     });
     document.getElementById('logout-btn').addEventListener('click', handleSignOut);
+    document.getElementById('tab-btn-record').addEventListener('click', () => switchTab('record'));
+    document.getElementById('tab-btn-mypage').addEventListener('click', () => switchTab('mypage'));
     document.getElementById('btn-3p').addEventListener('click', () => setPlayerCount(3));
     document.getElementById('btn-4p').addEventListener('click', () => setPlayerCount(4));
     document.getElementById('add-hanchan-btn').addEventListener('click', addHanchan);

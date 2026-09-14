@@ -48,6 +48,15 @@
   .topbar button{background:none;border:1px solid rgba(232,224,204,.4);color:#e8e0cc;border-radius:14px;
     padding:4px 10px;font-size:11px;cursor:pointer;font-family:inherit;flex-shrink:0;}
 
+  /* ---- tab bar ---- */
+  .tab-bar{display:flex;gap:8px;margin-top:14px;}
+  .tab-bar button{
+    flex:1;padding:11px 0;border-radius:12px;border:1.5px solid rgba(232,224,204,.4);
+    background:rgba(0,0,0,.18);font-family:inherit;font-size:14px;font-weight:700;
+    color:#e8e0cc;cursor:pointer;transition:.15s;
+  }
+  .tab-bar button.active{background:var(--tile);color:var(--ink);border-color:var(--tile);}
+
   /* ---- auth ---- */
   .auth-field{display:flex;flex-direction:column;gap:4px;margin-bottom:12px;}
   .auth-field label{font-size:12px;color:var(--muted);}
