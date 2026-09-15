@@ -11,6 +11,9 @@
   let saveDebounceTimer = null;
   let titleDebounceTimer = null;
   let flashTimer = null;
+  let currentHistoryDetailId = null;
+  let isEditingHistory = false;
+  let editingBackup = null;
 
   function defaultState(){
     return {
@@ -183,6 +186,7 @@
   }
 
   async function startNewSession(){
+    if(isEditingHistory) await exitEditingHistory();
     if(!confirm('現在の記録を保存して、新しい記録を始めますか？')) return;
     clearTimeout(saveDebounceTimer);
     await doSaveState();
@@ -876,6 +880,7 @@
   function openHistoryDetail(id){
     const row = historyList.find(r => String(r.id) === String(id));
     if(!row) return;
+    currentHistoryDetailId = id;
     const s = Object.assign(defaultState(), row.state || {});
     const d = new Date(row.created_at);
     document.getElementById('history-detail-title-text').textContent = row.title || '記録';
@@ -886,6 +891,66 @@
 
   function closeHistoryDetail(){
     document.getElementById('history-detail-overlay').style.display = 'none';
+  }
+
+  /* ---------- 過去の記録の編集 ---------- */
+  function editHistoryItem(id){
+    const row = historyList.find(r => String(r.id) === String(id));
+    if(!row) return;
+
+    if(!isEditingHistory){
+      editingBackup = {
+        sessionId: currentSessionId,
+        state: state,
+        groupId: currentGroupId,
+        title: document.getElementById('session-title-input').value
+      };
+    }
+    isEditingHistory = true;
+    currentSessionId = row.id;
+    currentGroupId = row.group_id || null;
+    state = row.state || defaultState();
+    normalizeState();
+
+    document.getElementById('session-title-input').value = row.title || defaultTitle();
+    document.getElementById('hanchan-rate-input').value = state.hanchanRate;
+    document.getElementById('chip-value-input').value = state.chipValue;
+    renderPlayerSetup();
+    renderHanchanTable();
+    renderChipSection();
+    renderFinalResults();
+    renderGroupSelect();
+    document.getElementById('editing-banner').style.display = 'flex';
+
+    closeHistoryDetail();
+    switchTab('record');
+  }
+
+  async function exitEditingHistory(){
+    if(!editingBackup) return;
+    clearTimeout(saveDebounceTimer);
+    await doSaveState();
+
+    currentSessionId = editingBackup.sessionId;
+    state = editingBackup.state;
+    currentGroupId = editingBackup.groupId;
+    normalizeState();
+    document.getElementById('session-title-input').value = editingBackup.title;
+    document.getElementById('hanchan-rate-input').value = state.hanchanRate;
+    document.getElementById('chip-value-input').value = state.chipValue;
+    isEditingHistory = false;
+    editingBackup = null;
+
+    renderPlayerSetup();
+    renderHanchanTable();
+    renderChipSection();
+    renderFinalResults();
+    renderGroupSelect();
+    document.getElementById('editing-banner').style.display = 'none';
+
+    await loadHistory();
+    renderHistory();
+    renderCareerStats();
   }
 
   /* ---------- リセット ---------- */
@@ -943,6 +1008,8 @@
     document.getElementById('reset-btn').addEventListener('click', resetAll);
     document.getElementById('new-session-btn').addEventListener('click', startNewSession);
     document.getElementById('history-detail-back').addEventListener('click', closeHistoryDetail);
+    document.getElementById('history-detail-edit-btn').addEventListener('click', () => editHistoryItem(currentHistoryDetailId));
+    document.getElementById('exit-editing-btn').addEventListener('click', exitEditingHistory);
 
     document.getElementById('group-select').addEventListener('change', e => applyGroup(e.target.value));
     document.getElementById('add-group-btn').addEventListener('click', openGroupForm);

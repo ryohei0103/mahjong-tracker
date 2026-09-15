@@ -78,6 +78,11 @@
 
     <div id="tab-record">
 
+      <div id="editing-banner" class="editing-banner" style="display:none">
+        <span>過去の記録を編集中</span>
+        <button type="button" id="exit-editing-btn">元の記録に戻る</button>
+      </div>
+
       <!-- 人数・名前設定 -->
       <section class="panel">
         <div class="panel-title">卓の設定</div>
@@ -182,6 +187,7 @@
           <div class="history-detail-date" id="history-detail-date"></div>
         </div>
       </div>
+      <button class="add-row-btn primary" id="history-detail-edit-btn" type="button">この記録を編集する</button>
       <div id="history-detail-body"></div>
     </div>
   </div>
