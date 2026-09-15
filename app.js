@@ -470,14 +470,18 @@
   }
 
   /* ---------- 通算成績 ---------- */
+  function sessionHasData(s){
+    return (s.hanchans || []).some(h => (h.scores || []).some(v => v !== null && v !== undefined));
+  }
+
   function computeCareerStats(){
     const records = [];
-    if(state.selfIndex !== null && state.selfIndex !== undefined && state.selfIndex < state.playerCount){
+    if(sessionHasData(state) && state.selfIndex !== null && state.selfIndex !== undefined && state.selfIndex < state.playerCount){
       records.push(state);
     }
     historyList.forEach(row => {
       const s = Object.assign(defaultState(), row.state || {});
-      if(s.selfIndex !== null && s.selfIndex !== undefined && s.selfIndex < s.playerCount){
+      if(sessionHasData(s) && s.selfIndex !== null && s.selfIndex !== undefined && s.selfIndex < s.playerCount){
         records.push(s);
       }
     });
@@ -748,7 +752,9 @@
       document.getElementById('group-detail-body').innerHTML = '<p class="hint">読み込みに失敗しました。</p>';
       return;
     }
-    const sessions = (data || []).map(row => Object.assign(defaultState(), row.state || {}));
+    const sessions = (data || [])
+      .map(row => Object.assign(defaultState(), row.state || {}))
+      .filter(sessionHasData);
     document.getElementById('group-detail-body').innerHTML = renderGroupStatsBody(group, sessions);
   }
 
