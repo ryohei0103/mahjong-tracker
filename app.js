@@ -685,7 +685,7 @@
   /* ---------- グループの成績 ---------- */
   function renderGroupStatsBody(group, sessions){
     if(sessions.length === 0){
-      return '<p class="hint">このグループにはまだ記録がありません。卓の設定で「グループから読み込む」を選んで記録を作成してください。</p>';
+      return '<section class="panel"><p class="hint">このグループにはまだ記録がありません。卓の設定で「グループから読み込む」を選んで記録を作成してください。</p></section>';
     }
     const n = group.player_count;
     const stats = [];
@@ -730,7 +730,7 @@
       </div>`;
     });
     html += '</div>';
-    return html;
+    return `<section class="panel">${html}</section>`;
   }
 
   async function openGroupDetail(id){
