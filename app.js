@@ -6,7 +6,7 @@
   let state = defaultState();
   let historyList = [];
   let groupsList = [];
-  let groupForm = { playerCount: 3, players: ['', '', '', ''], selfIndex: null };
+  let groupForm = { players: ['', '', '', ''], selfIndex: null };
   let authMode = 'signin';
   let saveDebounceTimer = null;
   let titleDebounceTimer = null;
@@ -54,7 +54,7 @@
     });
   }
 
-  function defaultName(i){ return ['A','B','C','D'][i]; }
+  function defaultName(i){ return ['A','B','C','D','E','F','G','H'][i] || `P${i+1}`; }
   function playerDisplayName(i){
     const v = state.players[i];
     return (v && v.trim() !== '') ? v : defaultName(i);
@@ -776,11 +776,11 @@
     }else{
       let html = '';
       groupsList.forEach(g => {
-        const members = (g.players || []).slice(0, g.player_count).map(n => escapeHtml(n || '')).join('・');
+        const members = (g.players || []).map(n => escapeHtml(n || '')).join('・');
         html += `<div class="history-item" data-group-open="${g.id}">
           <div class="history-main">
             <div class="history-title">${escapeHtml(g.name)}</div>
-            <div class="history-date">${g.player_count}人打ち・${members}</div>
+            <div class="history-date">${(g.players || []).length}人登録・${members}</div>
           </div>
           <button class="del-btn" data-group-del="${g.id}" type="button" aria-label="削除">✕</button>
         </div>`;
@@ -810,23 +810,33 @@
     select.value = currentGroupId || '';
   }
 
-  async function applyGroup(groupId){
+  function onGroupSelectChange(groupId){
     if(!groupId){
       currentGroupId = null;
-      await persistGroupId();
+      persistGroupId();
       return;
     }
     const group = groupsList.find(g => String(g.id) === String(groupId));
     if(!group) return;
+    if((group.players || []).length <= state.playerCount){
+      applyGroupWithMembers(group, group.players.map((_, i) => i));
+    }else{
+      openGroupPlayerPicker(group);
+    }
+  }
+
+  async function applyGroupWithMembers(group, indices){
     currentGroupId = group.id;
-    state.playerCount = group.player_count;
-    for(let i = 0; i < 4; i++){ state.players[i] = group.players[i] || ''; }
-    state.selfIndex = (group.self_index !== null && group.self_index !== undefined) ? group.self_index : null;
+    const names = indices.map(i => group.players[i] || '');
+    for(let i = 0; i < 4; i++){ state.players[i] = names[i] || ''; }
+    const selfPos = indices.indexOf(group.self_index);
+    state.selfIndex = selfPos >= 0 ? selfPos : null;
     renderPlayerSetup();
     renderHanchanTable();
     renderChipSection();
     renderFinalResults();
     renderCareerStats();
+    renderGroupSelect();
     await persistGroupId();
     scheduleSave();
   }
@@ -845,20 +855,76 @@
     renderGroups();
   }
 
+  /* ---------- グループの参加者選択 ---------- */
+  let pendingGroupForPicker = null;
+  let pickedMemberIndices = [];
+
+  function openGroupPlayerPicker(group){
+    pendingGroupForPicker = group;
+    pickedMemberIndices = [];
+    renderGroupPickerList();
+    document.getElementById('group-player-picker-overlay').style.display = 'flex';
+  }
+
+  function closeGroupPlayerPicker(){
+    document.getElementById('group-player-picker-overlay').style.display = 'none';
+    pendingGroupForPicker = null;
+    document.getElementById('group-select').value = currentGroupId || '';
+  }
+
+  function renderGroupPickerList(){
+    const group = pendingGroupForPicker;
+    const need = state.playerCount;
+    const remain = need - pickedMemberIndices.length;
+    document.getElementById('group-picker-hint').textContent =
+      remain > 0 ? `今日参加する${need}人を選んでください（あと${remain}人）` : `${need}人選択しました`;
+    let html = '';
+    group.players.forEach((name, i) => {
+      const checked = pickedMemberIndices.includes(i);
+      const label = (name && name.trim() !== '') ? name : defaultName(i);
+      html += `<button type="button" class="group-picker-item${checked ? ' active' : ''}" data-idx="${i}">${escapeHtml(label)}${group.self_index === i ? '（自分）' : ''}</button>`;
+    });
+    document.getElementById('group-picker-list').innerHTML = html;
+    document.querySelectorAll('.group-picker-item').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = Number(btn.dataset.idx);
+        const pos = pickedMemberIndices.indexOf(idx);
+        if(pos >= 0){
+          pickedMemberIndices.splice(pos, 1);
+        }else{
+          if(pickedMemberIndices.length >= need) return;
+          pickedMemberIndices.push(idx);
+        }
+        renderGroupPickerList();
+      });
+    });
+    const applyBtn = document.getElementById('group-picker-apply-btn');
+    applyBtn.disabled = pickedMemberIndices.length !== need;
+  }
+
+  function confirmGroupPicker(){
+    if(!pendingGroupForPicker || pickedMemberIndices.length !== state.playerCount) return;
+    const group = pendingGroupForPicker;
+    const indices = pickedMemberIndices.slice();
+    applyGroupWithMembers(group, indices);
+    document.getElementById('group-player-picker-overlay').style.display = 'none';
+    pendingGroupForPicker = null;
+  }
+
   /* ---------- グループ作成フォーム ---------- */
   function renderGroupNameGrid(){
     const grid = document.getElementById('group-name-grid');
     grid.innerHTML = '';
-    for(let i = 0; i < groupForm.playerCount; i++){
+    groupForm.players.forEach((name, i) => {
       const field = document.createElement('div');
       field.className = 'name-field';
       const label = document.createElement('label');
-      label.textContent = `プレイヤー${i+1}`;
+      label.textContent = `メンバー${i+1}`;
       const row = document.createElement('div');
       row.className = 'name-input-row';
       const input = document.createElement('input');
       input.type = 'text';
-      input.value = groupForm.players[i] || '';
+      input.value = name || '';
       input.placeholder = defaultName(i);
       input.addEventListener('input', e => { groupForm.players[i] = e.target.value; });
       const selfBtn = document.createElement('button');
@@ -871,22 +937,34 @@
       });
       row.appendChild(input);
       row.appendChild(selfBtn);
+      if(groupForm.players.length > 3){
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'remove-member-btn';
+        removeBtn.textContent = '−';
+        removeBtn.setAttribute('aria-label', 'このメンバーを削除');
+        removeBtn.addEventListener('click', () => {
+          groupForm.players.splice(i, 1);
+          if(groupForm.selfIndex === i) groupForm.selfIndex = null;
+          else if(groupForm.selfIndex !== null && groupForm.selfIndex > i) groupForm.selfIndex -= 1;
+          renderGroupNameGrid();
+        });
+        row.appendChild(removeBtn);
+      }
       field.appendChild(label);
       field.appendChild(row);
       grid.appendChild(field);
-    }
-    document.getElementById('group-btn-3p').classList.toggle('active', groupForm.playerCount === 3);
-    document.getElementById('group-btn-4p').classList.toggle('active', groupForm.playerCount === 4);
+    });
   }
 
-  function setGroupPlayerCount(n){
-    if(groupForm.playerCount === n) return;
-    groupForm.playerCount = n;
+  function addGroupMember(){
+    if(groupForm.players.length >= 8) return;
+    groupForm.players.push('');
     renderGroupNameGrid();
   }
 
   function openGroupForm(){
-    groupForm = { playerCount: 3, players: ['', '', '', ''], selfIndex: null };
+    groupForm = { players: ['', '', '', ''], selfIndex: null };
     document.getElementById('group-name-input').value = '';
     renderGroupNameGrid();
     document.getElementById('group-form-overlay').style.display = 'flex';
@@ -899,12 +977,16 @@
   async function saveGroup(){
     const name = document.getElementById('group-name-input').value.trim();
     if(!name){ alert('グループ名を入力してください'); return; }
+    const selfName = (groupForm.selfIndex !== null) ? (groupForm.players[groupForm.selfIndex] || '').trim() : '';
+    const players = groupForm.players.map(p => (p || '').trim()).filter(p => p !== '');
+    if(players.length < 3){ alert('メンバーを3人以上入力してください'); return; }
+    const selfIndex = selfName !== '' ? players.indexOf(selfName) : -1;
     const { error } = await sb.from('groups').insert({
       user_id: currentUser.id,
       name,
-      player_count: groupForm.playerCount,
-      players: groupForm.players.slice(0, groupForm.playerCount),
-      self_index: groupForm.selfIndex
+      player_count: players.length,
+      players,
+      self_index: selfIndex >= 0 ? selfIndex : null
     });
     if(error){ alert('グループの作成に失敗しました'); return; }
     closeGroupForm();
@@ -917,23 +999,28 @@
     if(sessions.length === 0){
       return '<section class="panel"><p class="hint">このグループにはまだ記録がありません。卓の設定で「グループから読み込む」を選んで記録を作成してください。</p></section>';
     }
-    const n = group.player_count;
-    const stats = [];
-    for(let i = 0; i < n; i++){
-      let totalSum = 0, rankSum = 0, firstCount = 0, count = 0;
-      sessions.forEach(s => {
-        if(i >= s.playerCount) return;
-        const totals = computeTotals(s);
-        const rank = totals.findIndex(t => t.idx === i);
-        if(rank === -1) return;
-        totalSum += totals[rank].sum;
-        rankSum += rank + 1;
-        count++;
-        if(rank === 0) firstCount++;
+    const statsByName = new Map();
+    sessions.forEach(s => {
+      const totals = computeTotals(s);
+      totals.forEach((t, rank) => {
+        if(!statsByName.has(t.name)){
+          statsByName.set(t.name, { name: t.name, count: 0, totalSum: 0, rankSum: 0 });
+        }
+        const rec = statsByName.get(t.name);
+        rec.count += 1;
+        rec.totalSum += t.sum;
+        rec.rankSum += (rank + 1);
       });
-      const name = (group.players[i] && group.players[i].trim() !== '') ? group.players[i] : defaultName(i);
-      stats.push({ name, isSelf: group.self_index === i, count, totalSum, avgRank: count ? rankSum / count : null });
-    }
+    });
+    const selfName = (group.self_index !== null && group.self_index !== undefined)
+      ? (group.players[group.self_index] || '').trim() : '';
+    const stats = Array.from(statsByName.values()).map(r => ({
+      name: r.name,
+      isSelf: selfName !== '' && selfName === r.name,
+      count: r.count,
+      totalSum: r.totalSum,
+      avgRank: r.count ? r.rankSum / r.count : null
+    }));
     stats.sort((a, b) => b.totalSum - a.totalSum);
 
     let html = '<div class="result-list">';
@@ -1248,13 +1335,14 @@
     document.getElementById('history-detail-edit-btn').addEventListener('click', () => editHistoryItem(currentHistoryDetailId));
     document.getElementById('exit-editing-btn').addEventListener('click', exitEditingHistory);
 
-    document.getElementById('group-select').addEventListener('change', e => applyGroup(e.target.value));
+    document.getElementById('group-select').addEventListener('change', e => onGroupSelectChange(e.target.value));
     document.getElementById('add-group-btn').addEventListener('click', openGroupForm);
     document.getElementById('group-form-back').addEventListener('click', closeGroupForm);
     document.getElementById('group-save-btn').addEventListener('click', saveGroup);
-    document.getElementById('group-btn-3p').addEventListener('click', () => setGroupPlayerCount(3));
-    document.getElementById('group-btn-4p').addEventListener('click', () => setGroupPlayerCount(4));
+    document.getElementById('add-group-member-btn').addEventListener('click', addGroupMember);
     document.getElementById('group-detail-back').addEventListener('click', closeGroupDetail);
+    document.getElementById('group-picker-back').addEventListener('click', closeGroupPlayerPicker);
+    document.getElementById('group-picker-apply-btn').addEventListener('click', confirmGroupPicker);
 
     const hanchanRateInput = document.getElementById('hanchan-rate-input');
     attachSelectOnFocus(hanchanRateInput);

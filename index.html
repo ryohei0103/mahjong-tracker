@@ -243,12 +243,9 @@
       </section>
       <section class="panel">
         <div class="panel-title">メンバー</div>
-        <div class="seat-toggle">
-          <button id="group-btn-3p" type="button">3人打ち</button>
-          <button id="group-btn-4p" type="button">4人打ち</button>
-        </div>
         <div class="name-grid" id="group-name-grid"></div>
-        <p class="hint">プレイヤー名の右の「自分」ボタンで、自分を指定できます。</p>
+        <button class="add-row-btn" id="add-group-member-btn" type="button">＋ メンバーを追加</button>
+        <p class="hint">好きな人数のメンバーを登録できます。プレイヤー名の右の「自分」ボタンで、自分を指定できます。記録作成時に、その日参加する人だけ選べます。</p>
       </section>
       <button class="add-row-btn primary" id="group-save-btn" type="button">グループを作成</button>
     </div>
@@ -264,6 +261,23 @@
         </div>
       </div>
       <div id="group-detail-body"></div>
+    </div>
+  </div>
+
+  <!-- グループの参加者選択 -->
+  <div id="group-player-picker-overlay" class="history-detail-overlay" style="display:none">
+    <div class="history-detail-panel">
+      <div class="history-detail-header">
+        <button type="button" id="group-picker-back" class="link-btn">← 戻る</button>
+        <div class="history-detail-title-wrap">
+          <div class="history-detail-title-text">参加するメンバーを選択</div>
+        </div>
+      </div>
+      <section class="panel">
+        <p class="hint" id="group-picker-hint"></p>
+        <div id="group-picker-list" class="group-picker-list"></div>
+        <button class="add-row-btn primary" id="group-picker-apply-btn" type="button">この人数で始める</button>
+      </section>
     </div>
   </div>
 
