@@ -154,6 +154,25 @@
   td input:focus{outline:2px solid var(--felt-2);outline-offset:1px;}
   .score-cell{display:flex;align-items:center;justify-content:center;gap:4px;}
   .score-cell input{width:46px;}
+  .score-cell-raw{flex-direction:column;gap:2px;}
+  .raw-score-input{width:64px;}
+  .raw-diff-display{font-size:10.5px;font-weight:700;min-height:13px;color:var(--muted);}
+  .tobi-row td{padding:4px 6px 8px;border-bottom:1px dashed var(--tile-edge);}
+  .tobi-select-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+  .tobi-label{font-size:11px;color:var(--muted);flex-shrink:0;}
+  .tobi-select-row select{
+    flex:1;min-width:0;border:1px solid var(--tile-edge);border-radius:6px;
+    padding:5px 4px;font-family:inherit;font-size:12px;background:#fff;color:var(--ink);
+  }
+
+  /* ---- mode toggle ---- */
+  .mode-toggle{display:flex;gap:6px;}
+  .mode-toggle button{
+    padding:6px 12px;border-radius:14px;border:1.5px solid var(--tile-edge);
+    background:transparent;font-family:inherit;font-size:12px;font-weight:700;
+    color:var(--muted);cursor:pointer;white-space:nowrap;
+  }
+  .mode-toggle button.active{background:var(--felt-1);color:var(--tile);border-color:var(--felt-1);}
   .sign-btn{
     width:26px;height:30px;flex-shrink:0;border-radius:6px;border:1px solid var(--tile-edge);
     background:#fff;font-weight:800;font-size:15px;color:var(--ink);cursor:pointer;padding:0;

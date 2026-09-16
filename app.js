@@ -26,7 +26,12 @@
         { plus: 0, minus: 0 }, { plus: 0, minus: 0 },
         { plus: 0, minus: 0 }, { plus: 0, minus: 0 }
       ],
-      selfIndex: null
+      selfIndex: null,
+      scoreMode: 'raw',
+      returnScore: 35,
+      umaEnabled: false,
+      tobiEnabled: false,
+      tobiAmount: 10
     };
   }
 
@@ -42,7 +47,10 @@
     if(!Array.isArray(state.hanchans) || state.hanchans.length === 0){
       state.hanchans = [{ scores:[null,null,null,null] }];
     }
-    state.hanchans.forEach(h => { while(h.scores.length < 4) h.scores.push(null); });
+    state.hanchans.forEach(h => {
+      while(h.scores.length < 4) h.scores.push(null);
+      if(!h.tobi) h.tobi = { bustedIdx: null, causerIdx: null };
+    });
   }
 
   function defaultName(i){ return ['A','B','C','D'][i]; }
@@ -282,6 +290,24 @@
 
   /* ---------- 半荘テーブル ---------- */
   function renderHanchanTable(){
+    document.querySelectorAll('.score-mode-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.scoreMode === state.scoreMode);
+    });
+    document.getElementById('return-score-row').style.display = state.scoreMode === 'raw' ? '' : 'none';
+    document.querySelectorAll('.return-score-btn').forEach(btn => {
+      btn.classList.toggle('active', Number(btn.dataset.returnScore) === state.returnScore);
+    });
+    document.querySelectorAll('.uma-btn').forEach(btn => {
+      btn.classList.toggle('active', (btn.dataset.uma === 'on') === state.umaEnabled);
+    });
+    document.querySelectorAll('.tobi-btn').forEach(btn => {
+      btn.classList.toggle('active', (btn.dataset.tobi === 'on') === state.tobiEnabled);
+    });
+    document.getElementById('tobi-amount-row').style.display = state.tobiEnabled ? '' : 'none';
+    document.querySelectorAll('.tobi-amount-btn').forEach(btn => {
+      btn.classList.toggle('active', Number(btn.dataset.tobiAmount) === state.tobiAmount);
+    });
+
     let theadHtml = '<tr><th>半荘</th>';
     for(let i = 0; i < state.playerCount; i++){
       theadHtml += `<th data-name-idx="${i}">${escapeHtml(playerDisplayName(i))}</th>`;
@@ -289,64 +315,139 @@
     theadHtml += '<th>判定</th><th></th></tr>';
     document.querySelector('#hanchan-table thead').innerHTML = theadHtml;
 
+    const isRaw = state.scoreMode === 'raw';
     let rows = '';
     state.hanchans.forEach((h, rowIdx) => {
       rows += `<tr><th>${rowIdx+1}</th>`;
       for(let i = 0; i < state.playerCount; i++){
         const val = h.scores[i];
-        const isNeg = (val !== null && val !== undefined && val < 0);
-        const abs = (val === null || val === undefined) ? '' : Math.abs(val);
-        const signChar = isNeg ? '\u2212' : '+';
-        rows += `<td><div class="score-cell">
-          <button type="button" class="sign-btn${isNeg ? ' sign-minus' : ''}" data-sign="${isNeg ? '-' : '+'}" data-row="${rowIdx}" data-player="${i}" aria-label="符号を切り替え">${signChar}</button>
-          <input type="text" inputmode="numeric" pattern="[0-9]*" value="${abs}" data-row="${rowIdx}" data-player="${i}" class="score-input">
-        </div></td>`;
+        if(isRaw){
+          const rawVal = (val === null || val === undefined) ? '' : ((val + state.returnScore) * 1000);
+          const diffText = (val === null || val === undefined) ? '' : formatScore(val);
+          rows += `<td><div class="score-cell score-cell-raw">
+            <input type="text" inputmode="numeric" pattern="[0-9]*" value="${rawVal}" placeholder="点数" data-row="${rowIdx}" data-player="${i}" class="score-input raw-score-input">
+            <span class="raw-diff-display ${val ? scoreClass(val) : ''}" id="raw-diff-${rowIdx}-${i}">${diffText}</span>
+          </div></td>`;
+        }else{
+          const isNeg = (val !== null && val !== undefined && val < 0);
+          const abs = (val === null || val === undefined) ? '' : Math.abs(val);
+          const signChar = isNeg ? '\u2212' : '+';
+          rows += `<td><div class="score-cell">
+            <button type="button" class="sign-btn${isNeg ? ' sign-minus' : ''}" data-sign="${isNeg ? '-' : '+'}" data-row="${rowIdx}" data-player="${i}" aria-label="符号を切り替え">${signChar}</button>
+            <input type="text" inputmode="numeric" pattern="[0-9]*" value="${abs}" data-row="${rowIdx}" data-player="${i}" class="score-input">
+          </div></td>`;
+        }
       }
       rows += `<td class="status-cell" id="status-${rowIdx}"></td>`;
       rows += `<td><button class="del-btn" data-del="${rowIdx}" type="button" aria-label="この半荘を削除">✕</button></td></tr>`;
+
+      if(state.tobiEnabled){
+        const t = h.tobi || { bustedIdx: null, causerIdx: null };
+        let bustedOptions = '<option value="">飛んだ人</option>';
+        let causerOptions = '<option value="">飛ばした人</option>';
+        for(let i = 0; i < state.playerCount; i++){
+          const nm = escapeHtml(playerDisplayName(i));
+          bustedOptions += `<option value="${i}"${t.bustedIdx === i ? ' selected' : ''}>${nm}</option>`;
+          causerOptions += `<option value="${i}"${t.causerIdx === i ? ' selected' : ''}>${nm}</option>`;
+        }
+        rows += `<tr class="tobi-row"><td colspan="${state.playerCount + 2}">
+          <div class="tobi-select-row">
+            <span class="tobi-label">トビ</span>
+            <select class="tobi-busted-select" data-row="${rowIdx}">${bustedOptions}</select>
+            <select class="tobi-causer-select" data-row="${rowIdx}">${causerOptions}</select>
+          </div>
+        </td></tr>`;
+      }
     });
     document.querySelector('#hanchan-table tbody').innerHTML = rows;
 
-    function recomputeScoreCell(r, p){
-      const inp = document.querySelector(`.score-input[data-row="${r}"][data-player="${p}"]`);
-      const btn = document.querySelector(`.sign-btn[data-row="${r}"][data-player="${p}"]`);
-      if(!inp || !btn) return;
-      const magStr = inp.value;
-      let val;
-      if(magStr === ''){ val = null; }
-      else { const mag = Number(magStr); val = (btn.dataset.sign === '-') ? -mag : mag; }
-      state.hanchans[r].scores[p] = val;
+    function afterScoreChange(r){
       updateRowStatus(r);
       updateFooter();
       renderFinalResults();
       scheduleSave();
     }
 
-    document.querySelectorAll('.score-input').forEach(inp => {
-      inp.addEventListener('input', e => {
-        e.target.value = e.target.value.replace(/[^0-9]/g, '');
-        const r = Number(e.target.dataset.row), p = Number(e.target.dataset.player);
-        recomputeScoreCell(r, p);
+    if(isRaw){
+      document.querySelectorAll('.raw-score-input').forEach(inp => {
+        inp.addEventListener('input', e => {
+          e.target.value = e.target.value.replace(/[^0-9]/g, '');
+          const r = Number(e.target.dataset.row), p = Number(e.target.dataset.player);
+          const rawStr = e.target.value;
+          let val;
+          if(rawStr === ''){ val = null; }
+          else { val = Math.round(Number(rawStr) / 1000 - state.returnScore); }
+          state.hanchans[r].scores[p] = val;
+          const diffEl = document.getElementById(`raw-diff-${r}-${p}`);
+          if(diffEl){
+            diffEl.textContent = val === null ? '' : formatScore(val);
+            diffEl.className = 'raw-diff-display' + (val ? ' ' + scoreClass(val) : '');
+          }
+          afterScoreChange(r);
+        });
       });
-    });
+    }else{
+      document.querySelectorAll('.score-input').forEach(inp => {
+        inp.addEventListener('input', e => {
+          e.target.value = e.target.value.replace(/[^0-9]/g, '');
+          const r = Number(e.target.dataset.row), p = Number(e.target.dataset.player);
+          const btn = document.querySelector(`.sign-btn[data-row="${r}"][data-player="${p}"]`);
+          if(!btn) return;
+          const magStr = e.target.value;
+          let val;
+          if(magStr === ''){ val = null; }
+          else { const mag = Number(magStr); val = (btn.dataset.sign === '-') ? -mag : mag; }
+          state.hanchans[r].scores[p] = val;
+          afterScoreChange(r);
+        });
+      });
 
-    document.querySelectorAll('.sign-btn').forEach(btn => {
-      btn.addEventListener('click', e => {
-        const b = e.currentTarget;
-        const newSign = b.dataset.sign === '-' ? '+' : '-';
-        b.dataset.sign = newSign;
-        b.textContent = newSign === '-' ? '\u2212' : '+';
-        b.classList.toggle('sign-minus', newSign === '-');
-        const r = Number(b.dataset.row), p = Number(b.dataset.player);
-        recomputeScoreCell(r, p);
+      document.querySelectorAll('.sign-btn').forEach(btn => {
+        btn.addEventListener('click', e => {
+          const b = e.currentTarget;
+          const newSign = b.dataset.sign === '-' ? '+' : '-';
+          b.dataset.sign = newSign;
+          b.textContent = newSign === '-' ? '\u2212' : '+';
+          b.classList.toggle('sign-minus', newSign === '-');
+          const r = Number(b.dataset.row), p = Number(b.dataset.player);
+          const inp = document.querySelector(`.score-input[data-row="${r}"][data-player="${p}"]`);
+          if(!inp) return;
+          const magStr = inp.value;
+          let val;
+          if(magStr === ''){ val = null; }
+          else { const mag = Number(magStr); val = (b.dataset.sign === '-') ? -mag : mag; }
+          state.hanchans[r].scores[p] = val;
+          afterScoreChange(r);
+        });
       });
-    });
+    }
+
+    if(state.tobiEnabled){
+      document.querySelectorAll('.tobi-busted-select').forEach(sel => {
+        sel.addEventListener('change', e => {
+          const r = Number(e.target.dataset.row);
+          if(!state.hanchans[r].tobi) state.hanchans[r].tobi = { bustedIdx: null, causerIdx: null };
+          state.hanchans[r].tobi.bustedIdx = e.target.value === '' ? null : Number(e.target.value);
+          renderFinalResults();
+          scheduleSave();
+        });
+      });
+      document.querySelectorAll('.tobi-causer-select').forEach(sel => {
+        sel.addEventListener('change', e => {
+          const r = Number(e.target.dataset.row);
+          if(!state.hanchans[r].tobi) state.hanchans[r].tobi = { bustedIdx: null, causerIdx: null };
+          state.hanchans[r].tobi.causerIdx = e.target.value === '' ? null : Number(e.target.value);
+          renderFinalResults();
+          scheduleSave();
+        });
+      });
+    }
 
     document.querySelectorAll('[data-del]').forEach(btn => {
       btn.addEventListener('click', e => {
         const idx = Number(e.currentTarget.dataset.del);
         state.hanchans.splice(idx, 1);
-        if(state.hanchans.length === 0) state.hanchans.push({ scores:[null,null,null,null] });
+        if(state.hanchans.length === 0) state.hanchans.push({ scores:[null,null,null,null], tobi:{ bustedIdx:null, causerIdx:null } });
         renderHanchanTable();
         renderFinalResults();
         scheduleSave();
@@ -355,6 +456,30 @@
 
     updateFooter();
     state.hanchans.forEach((_, idx) => updateRowStatus(idx));
+  }
+
+  function setUmaEnabled(on){
+    if(state.umaEnabled === on) return;
+    state.umaEnabled = on;
+    renderHanchanTable();
+    renderFinalResults();
+    scheduleSave();
+  }
+
+  function setTobiEnabled(on){
+    if(state.tobiEnabled === on) return;
+    state.tobiEnabled = on;
+    renderHanchanTable();
+    renderFinalResults();
+    scheduleSave();
+  }
+
+  function setTobiAmount(val){
+    if(state.tobiAmount === val) return;
+    state.tobiAmount = val;
+    renderHanchanTable();
+    renderFinalResults();
+    scheduleSave();
   }
 
   function updateRowStatus(rowIdx){
@@ -382,9 +507,23 @@
   }
 
   function addHanchan(){
-    state.hanchans.push({ scores:[null,null,null,null] });
+    state.hanchans.push({ scores:[null,null,null,null], tobi:{ bustedIdx:null, causerIdx:null } });
     renderHanchanTable();
     renderFinalResults();
+    scheduleSave();
+  }
+
+  function setScoreMode(mode){
+    if(state.scoreMode === mode) return;
+    state.scoreMode = mode;
+    renderHanchanTable();
+    scheduleSave();
+  }
+
+  function setReturnScore(val){
+    if(state.returnScore === val) return;
+    state.returnScore = val;
+    renderHanchanTable();
     scheduleSave();
   }
 
@@ -427,11 +566,44 @@
   }
 
   /* ---------- 最終結果 ---------- */
+  function umaTable(playerCount){
+    return playerCount === 3 ? [10, 0, -10] : [20, 10, -10, -20];
+  }
+
+  function computeHanchanBonus(s, h){
+    const n = s.playerCount;
+    const bonus = new Array(n).fill(0);
+    if(s.umaEnabled){
+      const scores = h.scores.slice(0, n);
+      if(scores.every(v => v !== null && v !== undefined)){
+        const table = umaTable(n);
+        const order = scores.map((v, i) => ({ i, v })).sort((a, b) => b.v - a.v);
+        order.forEach((o, rank) => { bonus[o.i] += table[rank]; });
+      }
+    }
+    if(s.tobiEnabled && h.tobi){
+      const { bustedIdx, causerIdx } = h.tobi;
+      if(bustedIdx !== null && bustedIdx !== undefined && causerIdx !== null && causerIdx !== undefined &&
+         bustedIdx !== causerIdx && bustedIdx < n && causerIdx < n){
+        bonus[bustedIdx] -= (s.tobiAmount || 0);
+        bonus[causerIdx] += (s.tobiAmount || 0);
+      }
+    }
+    return bonus;
+  }
+
   function computeTotals(s){
+    const n = s.playerCount;
+    const hTotals = new Array(n).fill(0);
+    (s.hanchans || []).forEach(h => {
+      const bonus = computeHanchanBonus(s, h);
+      for(let i = 0; i < n; i++){
+        hTotals[i] += (h.scores[i] || 0) + (bonus[i] || 0);
+      }
+    });
     const totals = [];
-    for(let i = 0; i < s.playerCount; i++){
-      let hTotal = 0;
-      (s.hanchans || []).forEach(h => { hTotal += (h.scores[i] || 0); });
+    for(let i = 0; i < n; i++){
+      const hTotal = hTotals[i];
       const hYen = Math.round(hTotal * (s.hanchanRate || 0));
       const c = (s.chips && s.chips[i]) || { plus:0, minus:0 };
       const chipTotal = (c.plus - c.minus) * (s.chipValue || 0);
@@ -1005,6 +1177,21 @@
     document.getElementById('btn-3p').addEventListener('click', () => setPlayerCount(3));
     document.getElementById('btn-4p').addEventListener('click', () => setPlayerCount(4));
     document.getElementById('add-hanchan-btn').addEventListener('click', addHanchan);
+    document.querySelectorAll('.score-mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => setScoreMode(btn.dataset.scoreMode));
+    });
+    document.querySelectorAll('.return-score-btn').forEach(btn => {
+      btn.addEventListener('click', () => setReturnScore(Number(btn.dataset.returnScore)));
+    });
+    document.querySelectorAll('.uma-btn').forEach(btn => {
+      btn.addEventListener('click', () => setUmaEnabled(btn.dataset.uma === 'on'));
+    });
+    document.querySelectorAll('.tobi-btn').forEach(btn => {
+      btn.addEventListener('click', () => setTobiEnabled(btn.dataset.tobi === 'on'));
+    });
+    document.querySelectorAll('.tobi-amount-btn').forEach(btn => {
+      btn.addEventListener('click', () => setTobiAmount(Number(btn.dataset.tobiAmount)));
+    });
     document.getElementById('reset-btn').addEventListener('click', resetAll);
     document.getElementById('new-session-btn').addEventListener('click', startNewSession);
     document.getElementById('history-detail-back').addEventListener('click', closeHistoryDetail);

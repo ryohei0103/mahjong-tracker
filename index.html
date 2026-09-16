@@ -108,6 +108,42 @@
           <input type="number" inputmode="numeric" id="hanchan-rate-input" value="1">
           <span>円</span>
         </div>
+        <div class="chip-value-row">
+          <span>入力方法</span>
+          <div class="mode-toggle">
+            <button class="score-mode-btn" data-score-mode="raw" type="button">点数入力</button>
+            <button class="score-mode-btn" data-score-mode="diff" type="button">差分入力</button>
+          </div>
+        </div>
+        <div class="chip-value-row" id="return-score-row">
+          <span>返し点</span>
+          <div class="mode-toggle">
+            <button class="return-score-btn" data-return-score="35" type="button">35000点</button>
+            <button class="return-score-btn" data-return-score="40" type="button">40000点</button>
+          </div>
+        </div>
+        <div class="chip-value-row">
+          <span>ウマ</span>
+          <div class="mode-toggle">
+            <button class="uma-btn" data-uma="off" type="button">なし</button>
+            <button class="uma-btn" data-uma="on" type="button">あり</button>
+          </div>
+        </div>
+        <div class="chip-value-row">
+          <span>トビ</span>
+          <div class="mode-toggle">
+            <button class="tobi-btn" data-tobi="off" type="button">なし</button>
+            <button class="tobi-btn" data-tobi="on" type="button">あり</button>
+          </div>
+        </div>
+        <div class="chip-value-row" id="tobi-amount-row">
+          <span>トビ点数</span>
+          <div class="mode-toggle">
+            <button class="tobi-amount-btn" data-tobi-amount="10" type="button">10000点</button>
+            <button class="tobi-amount-btn" data-tobi-amount="20" type="button">20000点</button>
+          </div>
+        </div>
+        <p class="hint">ウマは4人打ち +20/+10/−10/−20、3人打ち +10/0/−10（千点単位）を自動で加算します。トビは各半荘の行の下に出る「飛んだ人」「飛ばした人」で指定すると、飛んだ人からトビ点数を引き、飛ばした人に加算します。</p>
         <div class="table-scroll">
           <table id="hanchan-table">
             <thead></thead>
@@ -116,7 +152,7 @@
           </table>
         </div>
         <button class="add-row-btn" id="add-hanchan-btn" type="button">＋ 半荘を追加</button>
-        <p class="hint">左のボタン（+/−）をタップして符号を切り替え、右の欄に数字を入力してください。1半荘分の合計が0になると「判定」欄に✓が表示されます。</p>
+        <p class="hint">「点数入力」では自分の最終素点をそのまま入力すると、返し点との差分がプラス／マイナスで自動表示されます。「差分入力」では左のボタン（+/−）で符号を切り替え、右の欄に差分の数字を入力できます。1半荘分の合計が0になると「判定」欄に✓が表示されます。</p>
       </section>
 
       <!-- チップ精算 -->
