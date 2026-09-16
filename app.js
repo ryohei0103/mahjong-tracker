@@ -326,7 +326,7 @@
           const rawVal = (val === null || val === undefined) ? '' : ((val + state.returnScore) * 1000);
           const diffText = (val === null || val === undefined) ? '' : formatScore(val);
           rows += `<td><div class="score-cell score-cell-raw">
-            <input type="text" inputmode="numeric" pattern="[0-9]*" value="${rawVal}" placeholder="点数" data-row="${rowIdx}" data-player="${i}" class="score-input raw-score-input">
+            <input type="text" inputmode="text" pattern="-?[0-9]*" value="${rawVal}" placeholder="点数" data-row="${rowIdx}" data-player="${i}" class="score-input raw-score-input">
             <span class="raw-diff-display ${val ? scoreClass(val) : ''}" id="raw-diff-${rowIdx}-${i}">${diffText}</span>
           </div></td>`;
         }else{
@@ -421,11 +421,11 @@
     if(isRaw){
       document.querySelectorAll('.raw-score-input').forEach(inp => {
         inp.addEventListener('input', e => {
-          e.target.value = e.target.value.replace(/[^0-9]/g, '');
+          e.target.value = e.target.value.replace(/[^0-9-]/g, '').replace(/(?!^)-/g, '');
           const r = Number(e.target.dataset.row), p = Number(e.target.dataset.player);
           const rawStr = e.target.value;
           let val;
-          if(rawStr === ''){ val = null; }
+          if(rawStr === '' || rawStr === '-'){ val = null; }
           else { val = Math.round(Number(rawStr) / 1000 - state.returnScore); }
           state.hanchans[r].scores[p] = val;
           const diffEl = document.getElementById(`raw-diff-${r}-${p}`);
