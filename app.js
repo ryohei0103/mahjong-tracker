@@ -50,6 +50,7 @@
     state.hanchans.forEach(h => {
       while(h.scores.length < 4) h.scores.push(null);
       if(!h.tobi) h.tobi = { bustedIdx: null, causerIdx: null };
+      if(h.autoIdx === undefined) h.autoIdx = null;
     });
   }
 
@@ -402,8 +403,14 @@
       return null;
     }
 
-    function afterScoreChange(r){
+    function afterScoreChange(r, editedIdx){
+      const h = state.hanchans[r];
+      if(h.autoIdx !== null && h.autoIdx !== undefined && h.autoIdx !== editedIdx){
+        h.scores[h.autoIdx] = null;
+        h.autoIdx = null;
+      }
       const autoIdx = autoBalanceRow(r);
+      h.autoIdx = autoIdx;
       if(autoIdx !== null) updateCellDisplay(r, autoIdx);
       updateRowStatus(r);
       updateFooter();
@@ -426,7 +433,7 @@
             diffEl.textContent = val === null ? '' : formatScore(val);
             diffEl.className = 'raw-diff-display' + (val ? ' ' + scoreClass(val) : '');
           }
-          afterScoreChange(r);
+          afterScoreChange(r, p);
         });
       });
     }else{
@@ -441,7 +448,7 @@
           if(magStr === ''){ val = null; }
           else { const mag = Number(magStr); val = (btn.dataset.sign === '-') ? -mag : mag; }
           state.hanchans[r].scores[p] = val;
-          afterScoreChange(r);
+          afterScoreChange(r, p);
         });
       });
 
@@ -460,7 +467,7 @@
           if(magStr === ''){ val = null; }
           else { const mag = Number(magStr); val = (b.dataset.sign === '-') ? -mag : mag; }
           state.hanchans[r].scores[p] = val;
-          afterScoreChange(r);
+          afterScoreChange(r, p);
         });
       });
     }
@@ -490,7 +497,7 @@
       btn.addEventListener('click', e => {
         const idx = Number(e.currentTarget.dataset.del);
         state.hanchans.splice(idx, 1);
-        if(state.hanchans.length === 0) state.hanchans.push({ scores:[null,null,null,null], tobi:{ bustedIdx:null, causerIdx:null } });
+        if(state.hanchans.length === 0) state.hanchans.push({ scores:[null,null,null,null], tobi:{ bustedIdx:null, causerIdx:null }, autoIdx:null });
         renderHanchanTable();
         renderFinalResults();
         scheduleSave();
@@ -550,7 +557,7 @@
   }
 
   function addHanchan(){
-    state.hanchans.push({ scores:[null,null,null,null], tobi:{ bustedIdx:null, causerIdx:null } });
+    state.hanchans.push({ scores:[null,null,null,null], tobi:{ bustedIdx:null, causerIdx:null }, autoIdx:null });
     renderHanchanTable();
     renderFinalResults();
     scheduleSave();
