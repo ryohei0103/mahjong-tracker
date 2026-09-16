@@ -12,11 +12,12 @@
   html,body{margin:0;padding:0;}
   body{
     min-height:100vh;
+    overflow-x:hidden;
     background:radial-gradient(ellipse at top, var(--felt-2), var(--felt-1) 72%);
     font-family:'Zen Kaku Gothic New', sans-serif;
     color:var(--ink);
   }
-  .app{max-width:480px;margin:0 auto;padding:22px 14px 50px;}
+  .app{max-width:480px;margin:0 auto;padding:22px 14px 50px;overflow-x:hidden;}
 
   /* ---- hero ---- */
   .hero{text-align:center;padding:4px 0 6px;}
@@ -103,7 +104,7 @@
   .seat-toggle button.active{background:var(--felt-1);color:var(--tile);border-color:var(--felt-1);}
 
   /* ---- name grid ---- */
-  .name-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px 12px;}
+  .name-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px;}
   .name-field{display:flex;flex-direction:column;gap:3px;}
   .name-field label{font-size:11px;color:var(--muted);}
   .name-field input{
