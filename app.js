@@ -12,6 +12,8 @@
   let titleDebounceTimer = null;
   let flashTimer = null;
   let currentHistoryDetailId = null;
+  let currentGroupDetailId = null;
+  let editingGroupId = null;
   let isEditingHistory = false;
   let editingBackup = null;
 
@@ -964,14 +966,31 @@
   }
 
   function openGroupForm(){
+    editingGroupId = null;
     groupForm = { players: ['', '', '', ''], selfIndex: null };
     document.getElementById('group-name-input').value = '';
+    document.getElementById('group-form-title').textContent = 'グループを作成';
+    document.getElementById('group-save-btn').textContent = 'グループを作成';
+    renderGroupNameGrid();
+    document.getElementById('group-form-overlay').style.display = 'flex';
+  }
+
+  function openGroupEditForm(group){
+    editingGroupId = group.id;
+    groupForm = {
+      players: (group.players && group.players.length > 0) ? group.players.slice() : ['', '', '', ''],
+      selfIndex: (group.self_index !== null && group.self_index !== undefined) ? group.self_index : null
+    };
+    document.getElementById('group-name-input').value = group.name || '';
+    document.getElementById('group-form-title').textContent = 'グループを編集';
+    document.getElementById('group-save-btn').textContent = '変更を保存';
     renderGroupNameGrid();
     document.getElementById('group-form-overlay').style.display = 'flex';
   }
 
   function closeGroupForm(){
     document.getElementById('group-form-overlay').style.display = 'none';
+    editingGroupId = null;
   }
 
   async function saveGroup(){
@@ -981,14 +1000,19 @@
     const players = groupForm.players.map(p => (p || '').trim()).filter(p => p !== '');
     if(players.length < 3){ alert('メンバーを3人以上入力してください'); return; }
     const selfIndex = selfName !== '' ? players.indexOf(selfName) : -1;
-    const { error } = await sb.from('groups').insert({
-      user_id: currentUser.id,
+    const payload = {
       name,
       player_count: players.length,
       players,
       self_index: selfIndex >= 0 ? selfIndex : null
-    });
-    if(error){ alert('グループの作成に失敗しました'); return; }
+    };
+    let error;
+    if(editingGroupId){
+      ({ error } = await sb.from('groups').update(payload).eq('id', editingGroupId));
+    }else{
+      ({ error } = await sb.from('groups').insert({ user_id: currentUser.id, ...payload }));
+    }
+    if(error){ alert(editingGroupId ? '変更の保存に失敗しました' : 'グループの作成に失敗しました'); return; }
     closeGroupForm();
     await loadGroups();
     renderGroups();
@@ -1053,6 +1077,7 @@
   async function openGroupDetail(id){
     const group = groupsList.find(g => String(g.id) === String(id));
     if(!group) return;
+    currentGroupDetailId = id;
     document.getElementById('group-detail-title-text').textContent = group.name;
     document.getElementById('group-detail-body').innerHTML = '<p class="hint">読み込み中…</p>';
     document.getElementById('group-detail-overlay').style.display = 'flex';
@@ -1341,6 +1366,12 @@
     document.getElementById('group-save-btn').addEventListener('click', saveGroup);
     document.getElementById('add-group-member-btn').addEventListener('click', addGroupMember);
     document.getElementById('group-detail-back').addEventListener('click', closeGroupDetail);
+    document.getElementById('group-detail-edit-btn').addEventListener('click', () => {
+      const group = groupsList.find(g => String(g.id) === String(currentGroupDetailId));
+      if(!group) return;
+      closeGroupDetail();
+      openGroupEditForm(group);
+    });
     document.getElementById('group-picker-back').addEventListener('click', closeGroupPlayerPicker);
     document.getElementById('group-picker-apply-btn').addEventListener('click', confirmGroupPicker);
 
