@@ -88,9 +88,12 @@
         <div class="panel-title">卓の設定</div>
         <div class="group-select-row">
           <label>グループから読み込む</label>
-          <select id="group-select">
-            <option value="">グループを選択…</option>
-          </select>
+          <div class="group-select-inline">
+            <select id="group-select">
+              <option value="">グループを選択…</option>
+            </select>
+            <button type="button" id="group-refresh-btn">最新情報に更新</button>
+          </div>
         </div>
         <div class="seat-toggle">
           <button id="btn-3p" type="button">3人打ち</button>

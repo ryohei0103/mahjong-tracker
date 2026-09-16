@@ -1434,6 +1434,12 @@
     document.getElementById('exit-editing-btn').addEventListener('click', exitEditingHistory);
 
     document.getElementById('group-select').addEventListener('change', e => onGroupSelectChange(e.target.value));
+    document.getElementById('group-refresh-btn').addEventListener('click', async () => {
+      if(!currentGroupId){ alert('先にグループを選択してください'); return; }
+      await loadGroups();
+      renderGroupSelect();
+      onGroupSelectChange(currentGroupId);
+    });
     document.getElementById('add-group-btn').addEventListener('click', openGroupForm);
     document.getElementById('group-form-back').addEventListener('click', closeGroupForm);
     document.getElementById('group-save-btn').addEventListener('click', saveGroup);
