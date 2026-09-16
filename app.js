@@ -887,11 +887,7 @@
     }
     const group = groupsList.find(g => String(g.id) === String(groupId));
     if(!group) return;
-    if((group.players || []).length <= state.playerCount){
-      applyGroupWithMembers(group, group.players.map((_, i) => i));
-    }else{
-      openGroupPlayerPicker(group);
-    }
+    openGroupPlayerPicker(group);
   }
 
   async function applyGroupWithMembers(group, indices){
@@ -943,7 +939,7 @@
 
   function renderGroupPickerList(){
     const group = pendingGroupForPicker;
-    const need = state.playerCount;
+    const need = Math.min(state.playerCount, group.players.length);
     const remain = need - pickedMemberIndices.length;
     document.getElementById('group-picker-hint').textContent =
       remain > 0 ? `今日参加する${need}人を選んでください（あと${remain}人）` : `${need}人選択しました`;
@@ -972,7 +968,9 @@
   }
 
   function confirmGroupPicker(){
-    if(!pendingGroupForPicker || pickedMemberIndices.length !== state.playerCount) return;
+    if(!pendingGroupForPicker) return;
+    const need = Math.min(state.playerCount, pendingGroupForPicker.players.length);
+    if(pickedMemberIndices.length !== need) return;
     const group = pendingGroupForPicker;
     const indices = pickedMemberIndices.slice();
     applyGroupWithMembers(group, indices);
