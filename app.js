@@ -361,7 +361,50 @@
     });
     document.querySelector('#hanchan-table tbody').innerHTML = rows;
 
+    function updateCellDisplay(r, p){
+      const val = state.hanchans[r].scores[p];
+      if(isRaw){
+        const inp = document.querySelector(`.raw-score-input[data-row="${r}"][data-player="${p}"]`);
+        if(inp) inp.value = (val === null || val === undefined) ? '' : ((val + state.returnScore) * 1000);
+        const diffEl = document.getElementById(`raw-diff-${r}-${p}`);
+        if(diffEl){
+          diffEl.textContent = (val === null || val === undefined) ? '' : formatScore(val);
+          diffEl.className = 'raw-diff-display' + (val ? ' ' + scoreClass(val) : '');
+        }
+      }else{
+        const inp = document.querySelector(`.score-input[data-row="${r}"][data-player="${p}"]`);
+        const btn = document.querySelector(`.sign-btn[data-row="${r}"][data-player="${p}"]`);
+        if(inp && btn){
+          const isNeg = val !== null && val !== undefined && val < 0;
+          inp.value = (val === null || val === undefined) ? '' : Math.abs(val);
+          btn.dataset.sign = isNeg ? '-' : '+';
+          btn.textContent = isNeg ? '\u2212' : '+';
+          btn.classList.toggle('sign-minus', isNeg);
+        }
+      }
+    }
+
+    function autoBalanceRow(r){
+      const h = state.hanchans[r];
+      const n = state.playerCount;
+      const emptyIndices = [];
+      let sum = 0;
+      for(let i = 0; i < n; i++){
+        const v = h.scores[i];
+        if(v === null || v === undefined) emptyIndices.push(i);
+        else sum += v;
+      }
+      if(emptyIndices.length === 1){
+        const idx = emptyIndices[0];
+        h.scores[idx] = -sum;
+        return idx;
+      }
+      return null;
+    }
+
     function afterScoreChange(r){
+      const autoIdx = autoBalanceRow(r);
+      if(autoIdx !== null) updateCellDisplay(r, autoIdx);
       updateRowStatus(r);
       updateFooter();
       renderFinalResults();
