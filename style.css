@@ -133,13 +133,13 @@
   }
 
   /* ---- group player picker ---- */
-  .group-picker-list{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
-  .group-picker-item{
-    padding:9px 14px;border-radius:16px;border:1.5px solid var(--tile-edge);
-    background:transparent;font-family:inherit;font-size:13.5px;font-weight:700;
-    color:var(--ink);cursor:pointer;
+  .group-picker-list{display:flex;flex-direction:column;gap:10px;margin-bottom:14px;}
+  .picker-seat-row{display:flex;align-items:center;gap:10px;}
+  .picker-seat-row label{flex-shrink:0;width:64px;font-size:12.5px;font-weight:700;color:var(--muted);}
+  .picker-seat-row select{
+    flex:1;min-width:0;border:1px solid var(--tile-edge);border-radius:8px;padding:9px 10px;
+    font-family:inherit;font-size:14px;background:#fff;color:var(--ink);
   }
-  .group-picker-item.active{background:var(--felt-1);color:var(--tile);border-color:var(--felt-1);}
   #group-picker-apply-btn:disabled{opacity:.4;cursor:not-allowed;}
 
   /* ---- career stats ---- */

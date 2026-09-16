@@ -922,11 +922,12 @@
 
   /* ---------- グループの参加者選択 ---------- */
   let pendingGroupForPicker = null;
-  let pickedMemberIndices = [];
+  let pickerSelections = [];
 
   function openGroupPlayerPicker(group){
     pendingGroupForPicker = group;
-    pickedMemberIndices = [];
+    const need = Math.min(state.playerCount, group.players.length);
+    pickerSelections = new Array(need).fill(null);
     renderGroupPickerList();
     document.getElementById('group-player-picker-overlay').style.display = 'flex';
   }
@@ -939,40 +940,40 @@
 
   function renderGroupPickerList(){
     const group = pendingGroupForPicker;
-    const need = Math.min(state.playerCount, group.players.length);
-    const remain = need - pickedMemberIndices.length;
+    const need = pickerSelections.length;
+    const filled = pickerSelections.filter(v => v !== null).length;
     document.getElementById('group-picker-hint').textContent =
-      remain > 0 ? `今日参加する${need}人を選んでください（あと${remain}人）` : `${need}人選択しました`;
+      filled < need ? `プレイヤー1〜${need}にそれぞれ選んでください（あと${need - filled}人）` : `${need}人選択しました`;
     let html = '';
-    group.players.forEach((name, i) => {
-      const checked = pickedMemberIndices.includes(i);
-      const label = (name && name.trim() !== '') ? name : defaultName(i);
-      html += `<button type="button" class="group-picker-item${checked ? ' active' : ''}" data-idx="${i}">${escapeHtml(label)}${group.self_index === i ? '（自分）' : ''}</button>`;
-    });
+    for(let pos = 0; pos < need; pos++){
+      let options = '<option value="">選択してください</option>';
+      group.players.forEach((name, i) => {
+        const label = (name && name.trim() !== '') ? name : defaultName(i);
+        const usedElsewhere = pickerSelections.some((sel, p) => p !== pos && sel === i);
+        options += `<option value="${i}"${pickerSelections[pos] === i ? ' selected' : ''}${usedElsewhere ? ' disabled' : ''}>${escapeHtml(label)}${group.self_index === i ? '（自分）' : ''}</option>`;
+      });
+      html += `<div class="picker-seat-row">
+        <label>プレイヤー${pos+1}</label>
+        <select class="group-picker-seat-select" data-pos="${pos}">${options}</select>
+      </div>`;
+    }
     document.getElementById('group-picker-list').innerHTML = html;
-    document.querySelectorAll('.group-picker-item').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const idx = Number(btn.dataset.idx);
-        const pos = pickedMemberIndices.indexOf(idx);
-        if(pos >= 0){
-          pickedMemberIndices.splice(pos, 1);
-        }else{
-          if(pickedMemberIndices.length >= need) return;
-          pickedMemberIndices.push(idx);
-        }
+    document.querySelectorAll('.group-picker-seat-select').forEach(sel => {
+      sel.addEventListener('change', e => {
+        const pos = Number(e.target.dataset.pos);
+        pickerSelections[pos] = e.target.value === '' ? null : Number(e.target.value);
         renderGroupPickerList();
       });
     });
     const applyBtn = document.getElementById('group-picker-apply-btn');
-    applyBtn.disabled = pickedMemberIndices.length !== need;
+    applyBtn.disabled = pickerSelections.some(v => v === null);
   }
 
   function confirmGroupPicker(){
     if(!pendingGroupForPicker) return;
-    const need = Math.min(state.playerCount, pendingGroupForPicker.players.length);
-    if(pickedMemberIndices.length !== need) return;
+    if(pickerSelections.length === 0 || pickerSelections.some(v => v === null)) return;
     const group = pendingGroupForPicker;
-    const indices = pickedMemberIndices.slice();
+    const indices = pickerSelections.slice();
     applyGroupWithMembers(group, indices);
     document.getElementById('group-player-picker-overlay').style.display = 'none';
     pendingGroupForPicker = null;
