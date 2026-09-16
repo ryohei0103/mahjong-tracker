@@ -179,6 +179,12 @@
     flex:1;min-width:0;border:1px solid var(--tile-edge);border-radius:6px;
     padding:5px 4px;font-family:inherit;font-size:12px;background:#fff;color:var(--ink);
   }
+  .yakitori-player-btn{
+    padding:5px 10px;border-radius:12px;border:1.5px solid var(--tile-edge);
+    background:#fff;font-family:inherit;font-size:12px;font-weight:700;
+    color:var(--muted);cursor:pointer;white-space:nowrap;
+  }
+  .yakitori-player-btn.active{background:var(--loss);color:#fff;border-color:var(--loss);}
 
   /* ---- mode toggle ---- */
   .mode-toggle{display:flex;gap:6px;}

@@ -33,7 +33,9 @@
       returnScore: 35,
       umaEnabled: false,
       tobiEnabled: false,
-      tobiAmount: 10
+      tobiAmount: 10,
+      yakitoriEnabled: false,
+      yakitoriAmount: 10
     };
   }
 
@@ -53,6 +55,8 @@
       while(h.scores.length < 4) h.scores.push(null);
       if(!h.tobi) h.tobi = { bustedIdx: null, causerIdx: null };
       if(h.autoIdx === undefined) h.autoIdx = null;
+      if(!Array.isArray(h.yakitori)) h.yakitori = [false, false, false, false];
+      while(h.yakitori.length < 4) h.yakitori.push(false);
     });
   }
 
@@ -310,6 +314,13 @@
     document.querySelectorAll('.tobi-amount-btn').forEach(btn => {
       btn.classList.toggle('active', Number(btn.dataset.tobiAmount) === state.tobiAmount);
     });
+    document.querySelectorAll('.yakitori-btn').forEach(btn => {
+      btn.classList.toggle('active', (btn.dataset.yakitori === 'on') === state.yakitoriEnabled);
+    });
+    document.getElementById('yakitori-amount-row').style.display = state.yakitoriEnabled ? '' : 'none';
+    document.querySelectorAll('.yakitori-amount-btn').forEach(btn => {
+      btn.classList.toggle('active', Number(btn.dataset.yakitoriAmount) === state.yakitoriAmount);
+    });
 
     let theadHtml = '<tr><th>半荘</th>';
     for(let i = 0; i < state.playerCount; i++){
@@ -358,6 +369,21 @@
             <span class="tobi-label">トビ</span>
             <select class="tobi-busted-select" data-row="${rowIdx}">${bustedOptions}</select>
             <select class="tobi-causer-select" data-row="${rowIdx}">${causerOptions}</select>
+          </div>
+        </td></tr>`;
+      }
+
+      if(state.yakitoriEnabled){
+        const yk = h.yakitori || [false, false, false, false];
+        let itemsHtml = '';
+        for(let i = 0; i < state.playerCount; i++){
+          const nm = escapeHtml(playerDisplayName(i));
+          itemsHtml += `<button type="button" class="yakitori-player-btn${yk[i] ? ' active' : ''}" data-row="${rowIdx}" data-player="${i}">${nm}</button>`;
+        }
+        rows += `<tr class="tobi-row"><td colspan="${state.playerCount + 2}">
+          <div class="tobi-select-row">
+            <span class="tobi-label">焼き鳥</span>
+            ${itemsHtml}
           </div>
         </td></tr>`;
       }
@@ -495,11 +521,25 @@
       });
     }
 
+    if(state.yakitoriEnabled){
+      document.querySelectorAll('.yakitori-player-btn').forEach(btn => {
+        btn.addEventListener('click', e => {
+          const b = e.currentTarget;
+          const r = Number(b.dataset.row), p = Number(b.dataset.player);
+          if(!Array.isArray(state.hanchans[r].yakitori)) state.hanchans[r].yakitori = [false, false, false, false];
+          state.hanchans[r].yakitori[p] = !state.hanchans[r].yakitori[p];
+          b.classList.toggle('active', state.hanchans[r].yakitori[p]);
+          renderFinalResults();
+          scheduleSave();
+        });
+      });
+    }
+
     document.querySelectorAll('[data-del]').forEach(btn => {
       btn.addEventListener('click', e => {
         const idx = Number(e.currentTarget.dataset.del);
         state.hanchans.splice(idx, 1);
-        if(state.hanchans.length === 0) state.hanchans.push({ scores:[null,null,null,null], tobi:{ bustedIdx:null, causerIdx:null }, autoIdx:null });
+        if(state.hanchans.length === 0) state.hanchans.push({ scores:[null,null,null,null], tobi:{ bustedIdx:null, causerIdx:null }, autoIdx:null, yakitori:[false,false,false,false] });
         renderHanchanTable();
         renderFinalResults();
         scheduleSave();
@@ -534,6 +574,22 @@
     scheduleSave();
   }
 
+  function setYakitoriEnabled(on){
+    if(state.yakitoriEnabled === on) return;
+    state.yakitoriEnabled = on;
+    renderHanchanTable();
+    renderFinalResults();
+    scheduleSave();
+  }
+
+  function setYakitoriAmount(val){
+    if(state.yakitoriAmount === val) return;
+    state.yakitoriAmount = val;
+    renderHanchanTable();
+    renderFinalResults();
+    scheduleSave();
+  }
+
   function updateRowStatus(rowIdx){
     const h = state.hanchans[rowIdx];
     if(!h) return;
@@ -559,7 +615,7 @@
   }
 
   function addHanchan(){
-    state.hanchans.push({ scores:[null,null,null,null], tobi:{ bustedIdx:null, causerIdx:null }, autoIdx:null });
+    state.hanchans.push({ scores:[null,null,null,null], tobi:{ bustedIdx:null, causerIdx:null }, autoIdx:null, yakitori:[false,false,false,false] });
     renderHanchanTable();
     renderFinalResults();
     scheduleSave();
@@ -639,6 +695,17 @@
          bustedIdx !== causerIdx && bustedIdx < n && causerIdx < n){
         bonus[bustedIdx] -= (s.tobiAmount || 0);
         bonus[causerIdx] += (s.tobiAmount || 0);
+      }
+    }
+    if(s.yakitoriEnabled && Array.isArray(h.yakitori)){
+      const flags = h.yakitori.slice(0, n);
+      const numYakitori = flags.filter(Boolean).length;
+      const numNon = n - numYakitori;
+      if(numYakitori > 0 && numNon > 0){
+        const amt = s.yakitoriAmount || 0;
+        for(let i = 0; i < n; i++){
+          bonus[i] += flags[i] ? -(amt * numNon) : (amt * numYakitori);
+        }
       }
     }
     return bonus;
@@ -1353,6 +1420,12 @@
     });
     document.querySelectorAll('.tobi-amount-btn').forEach(btn => {
       btn.addEventListener('click', () => setTobiAmount(Number(btn.dataset.tobiAmount)));
+    });
+    document.querySelectorAll('.yakitori-btn').forEach(btn => {
+      btn.addEventListener('click', () => setYakitoriEnabled(btn.dataset.yakitori === 'on'));
+    });
+    document.querySelectorAll('.yakitori-amount-btn').forEach(btn => {
+      btn.addEventListener('click', () => setYakitoriAmount(Number(btn.dataset.yakitoriAmount)));
     });
     document.getElementById('reset-btn').addEventListener('click', resetAll);
     document.getElementById('new-session-btn').addEventListener('click', startNewSession);

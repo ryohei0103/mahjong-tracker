@@ -143,7 +143,21 @@
             <button class="tobi-amount-btn" data-tobi-amount="20" type="button">20000点</button>
           </div>
         </div>
-        <p class="hint">ウマは4人打ち +20/+10/−10/−20、3人打ち +10/0/−10（千点単位）を自動で加算します。トビは各半荘の行の下に出る「飛んだ人」「飛ばした人」で指定すると、飛んだ人からトビ点数を引き、飛ばした人に加算します。</p>
+        <div class="chip-value-row">
+          <span>焼き鳥</span>
+          <div class="mode-toggle">
+            <button class="yakitori-btn" data-yakitori="off" type="button">なし</button>
+            <button class="yakitori-btn" data-yakitori="on" type="button">あり</button>
+          </div>
+        </div>
+        <div class="chip-value-row" id="yakitori-amount-row">
+          <span>焼き鳥点数</span>
+          <div class="mode-toggle">
+            <button class="yakitori-amount-btn" data-yakitori-amount="10" type="button">10000点</button>
+            <button class="yakitori-amount-btn" data-yakitori-amount="20" type="button">20000点</button>
+          </div>
+        </div>
+        <p class="hint">ウマは4人打ち +20/+10/−10/−20、3人打ち +10/0/−10（千点単位）を自動で加算します。トビは各半荘の行の下に出る「飛んだ人」「飛ばした人」で指定すると、飛んだ人からトビ点数を引き、飛ばした人に加算します。焼き鳥は各半荘の行の下でその半荘に一度も上がれなかった人を選ぶと、焼き鳥の人から焼き鳥でない人それぞれへ焼き鳥点数を支払います（例: 焼き鳥点数10000点・3人打ちで1人が焼き鳥なら、その人は他の2人にそれぞれ10000点ずつ、合計20000点支払います）。</p>
         <div class="table-scroll">
           <table id="hanchan-table">
             <thead></thead>
